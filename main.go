@@ -6,13 +6,16 @@ import (
 	"image/color"
 	"image/png"
 	"math"
+	"math/rand"
 	"os"
 	"path-tracer/rendim"
 	"time"
 )
 
 const (
-	width, height = 800, 400
+	width   = 400
+	height  = 200
+	samples = 100
 )
 
 func main() {
@@ -31,28 +34,29 @@ func main() {
 }
 
 func render() image.Image {
-	//camera setup
-	lowerLeftCorner := rendim.NewVec3d(-2.0, -1.0, -1.0)
-	horizontal := rendim.NewVec3d(4.0, 0.0, 0.0)
-	vertical := rendim.NewVec3d(0.0, 2.0, 0.0)
-	origin := rendim.NewVec3d(0.0, 0.0, 0.0)
 
 	//scene setup
 	world := rendim.HitableList{}
 	world = append(world, rendim.NewSphere(rendim.NewVec3d(0.0, 0.0, -1.0), 0.5))
 	world = append(world, rendim.NewSphere(rendim.NewVec3d(0.0, -100.5, -1.0), 100.0))
 
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	//camera setup
+	cam := rendim.NewCamera()
 
+	//rand
+	rnd := rand.New(rand.NewSource(42))
+
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for py := 0; py < height; py++ {
 		for px := 0; px < width; px++ {
-			u := float64(px) / width
-			v := float64(height-py) / height
-
-			rayDirection := lowerLeftCorner.Add(horizontal.MultiplyScalar(u).Add(vertical.MultiplyScalar(v)))
-			r := rendim.NewRay(origin, rayDirection)
-
-			rayClr := rayColor(r, &world)
+			var rayClr rendim.Vec3d
+			for s := 0; s < samples; s++ {
+				u := (float64(px) + rnd.Float64()) / float64(width)
+				v := (float64(height-py) + rnd.Float64()) / float64(height)
+				r := cam.GetRay(u, v)
+				rayClr = rayClr.Add(rayColor(r, &world))
+			}
+			rayClr = rayClr.DivideScalar(samples)
 
 			ir := uint8(255.99 * rayClr.X())
 			ig := uint8(255.99 * rayClr.Y())
