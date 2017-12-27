@@ -1,4 +1,4 @@
-package main
+package rendim
 
 import (
 	"math"
@@ -12,6 +12,18 @@ func NewVec3d(x, y, z float64) Vec3d {
 	return Vec3d{e: [3]float64{x, y, z}}
 }
 
+func (v Vec3d) X() float64 {
+	return v.e[0]
+}
+
+func (v Vec3d) Y() float64 {
+	return v.e[1]
+}
+
+func (v Vec3d) Z() float64 {
+	return v.e[2]
+}
+
 func (v Vec3d) Length() float64 {
 	return math.Sqrt(v.e[0]*v.e[0] + v.e[1]*v.e[1] + v.e[2]*v.e[2])
 }
@@ -20,7 +32,7 @@ func (v Vec3d) LengthSquared() float64 {
 	return v.e[0]*v.e[0] + v.e[1]*v.e[1] + v.e[2]*v.e[2]
 }
 
-func (v Vec3d) Multiply(s float64) Vec3d {
+func (v Vec3d) MultiplyScalar(s float64) Vec3d {
 	return Vec3d{e: [3]float64{
 		v.e[0] * s,
 		v.e[1] * s,
@@ -28,7 +40,7 @@ func (v Vec3d) Multiply(s float64) Vec3d {
 	}}
 }
 
-func (v Vec3d) Divide(s float64) Vec3d {
+func (v Vec3d) DivideScalar(s float64) Vec3d {
 	return Vec3d{e: [3]float64{
 		v.e[0] / s,
 		v.e[1] / s,
@@ -65,5 +77,5 @@ func (v Vec3d) Cross(v2 Vec3d) Vec3d {
 }
 
 func (v Vec3d) UnitVector() Vec3d {
-	return v.Divide(v.Length())
+	return v.DivideScalar(v.Length())
 }
