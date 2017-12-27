@@ -18,6 +18,8 @@ const (
 	samples = 100
 )
 
+var rnd = rand.New(rand.NewSource(42))
+
 func main() {
 	start := time.Now()
 	img := render()
@@ -43,9 +45,6 @@ func render() image.Image {
 	//camera setup
 	cam := rendim.NewCamera()
 
-	//rand
-	rnd := rand.New(rand.NewSource(42))
-
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for py := 0; py < height; py++ {
 		for px := 0; px < width; px++ {
@@ -57,10 +56,14 @@ func render() image.Image {
 				rayClr = rayClr.Add(rayColor(r, &world))
 			}
 			rayClr = rayClr.DivideScalar(samples)
+			rayClrGamma := rendim.NewVec3d(
+				math.Sqrt(rayClr.X()),
+				math.Sqrt(rayClr.Y()),
+				math.Sqrt(rayClr.Z()))
 
-			ir := uint8(255.99 * rayClr.X())
-			ig := uint8(255.99 * rayClr.Y())
-			ib := uint8(255.99 * rayClr.Z())
+			ir := uint8(255.99 * rayClrGamma.X())
+			ig := uint8(255.99 * rayClrGamma.Y())
+			ib := uint8(255.99 * rayClrGamma.Z())
 
 			clr := color.RGBA{R: ir, G: ig, B: ib, A: 255}
 
@@ -74,7 +77,9 @@ func render() image.Image {
 func rayColor(r rendim.Ray, world *rendim.HitableList) rendim.Vec3d {
 	rec := &rendim.HitRecord{}
 	if world.Hit(r, 0.0, math.MaxFloat64, rec) {
-		return rendim.NewVec3d(rec.Normal.X()+1.0, rec.Normal.Y()+1.0, rec.Normal.Z()+1.0).MultiplyScalar(0.5)
+		target := rec.P.Add(rec.Normal).Add(randomInUnitSphere())
+		newRay := rendim.NewRay(rec.P, target.Subtract(rec.P))
+		return rayColor(newRay, world).MultiplyScalar(0.5)
 	}
 
 	unitDirection := r.Direction().UnitVector()
@@ -83,4 +88,12 @@ func rayColor(r rendim.Ray, world *rendim.HitableList) rendim.Vec3d {
 	blue := rendim.NewVec3d(0.5, 0.7, 1.0)
 	clr := white.MultiplyScalar(1.0 - t).Add(blue.MultiplyScalar(t))
 	return clr
+}
+
+func randomInUnitSphere() rendim.Vec3d {
+	p := rendim.NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(rendim.NewVec3d(1.0, 1.0, 1.0))
+	for p.Dot(p) >= 1.0 {
+		p = rendim.NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(rendim.NewVec3d(1.0, 1.0, 1.0))
+	}
+	return p
 }

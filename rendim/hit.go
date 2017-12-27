@@ -6,7 +6,7 @@ type Hitable interface {
 
 type HitRecord struct {
 	t      float64
-	p      Vec3d
+	P      Vec3d
 	Normal Vec3d
 }
 
@@ -23,7 +23,7 @@ func (hl HitableList) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) boo
 
 			//rec = tempRec //todo:NOTE!!! copy tempRec to rec
 			rec.t = tempRec.t
-			rec.p = tempRec.p
+			rec.P = tempRec.P
 			rec.Normal = tempRec.Normal
 		}
 	}

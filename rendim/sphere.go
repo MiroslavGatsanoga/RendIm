@@ -22,15 +22,15 @@ func (s Sphere) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool {
 		temp := (-b - math.Sqrt(discriminant)) / a
 		if temp > tMin && temp < tMax {
 			rec.t = temp
-			rec.p = r.PointAt(rec.t)
-			rec.Normal = rec.p.Subtract(s.Center).DivideScalar(s.Radius)
+			rec.P = r.PointAt(rec.t)
+			rec.Normal = rec.P.Subtract(s.Center).DivideScalar(s.Radius)
 			return true
 		}
 		temp = (-b + math.Sqrt(discriminant)) / a
 		if temp > tMin && temp < tMax {
 			rec.t = temp
-			rec.p = r.PointAt(rec.t)
-			rec.Normal = rec.p.Subtract(s.Center).DivideScalar(s.Radius)
+			rec.P = r.PointAt(rec.t)
+			rec.Normal = rec.P.Subtract(s.Center).DivideScalar(s.Radius)
 			return true
 		}
 	}
