@@ -62,10 +62,23 @@ func render() image.Image {
 }
 
 func rayColor(r rendim.Ray) rendim.Vec3d {
+	if hitSphere(rendim.NewVec3d(0.0, 0.0, -1.0), 0.5, r) {
+		return rendim.NewVec3d(1.0, 0.0, 0.0)
+	}
+
 	unitDirection := r.Direction().UnitVector()
 	t := 0.5 * (unitDirection.Y() + 1.0)
 	white := rendim.NewVec3d(1.0, 1.0, 1.0)
 	blue := rendim.NewVec3d(0.5, 0.7, 1.0)
 	clr := white.MultiplyScalar(1.0 - t).Add(blue.MultiplyScalar(t))
 	return clr
+}
+
+func hitSphere(center rendim.Vec3d, radius float64, r rendim.Ray) bool {
+	oc := r.Origin().Subtract(center)
+	a := r.Direction().Dot(r.Direction())
+	b := 2.0 * oc.Dot(r.Direction())
+	c := oc.Dot(oc) - radius*radius
+	discriminant := b*b - 4*a*c
+	return (discriminant > 0)
 }
