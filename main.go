@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"math"
 	"os"
 	"path-tracer/rendim"
 	"time"
@@ -62,23 +63,31 @@ func render() image.Image {
 }
 
 func rayColor(r rendim.Ray) rendim.Vec3d {
-	if hitSphere(rendim.NewVec3d(0.0, 0.0, -1.0), 0.5, r) {
-		return rendim.NewVec3d(1.0, 0.0, 0.0)
+	sphereCenter := rendim.NewVec3d(0.0, 0.0, -1.0)
+	t := hitSphere(sphereCenter, 0.5, r)
+	if t > 0.0 {
+		N := r.PointAt(t).Subtract(sphereCenter).UnitVector()
+		return rendim.NewVec3d(N.X()+1.0, N.Y()+1, N.Z()+1).MultiplyScalar(0.5)
 	}
 
 	unitDirection := r.Direction().UnitVector()
-	t := 0.5 * (unitDirection.Y() + 1.0)
+	t = 0.5 * (unitDirection.Y() + 1.0)
 	white := rendim.NewVec3d(1.0, 1.0, 1.0)
 	blue := rendim.NewVec3d(0.5, 0.7, 1.0)
 	clr := white.MultiplyScalar(1.0 - t).Add(blue.MultiplyScalar(t))
 	return clr
 }
 
-func hitSphere(center rendim.Vec3d, radius float64, r rendim.Ray) bool {
+func hitSphere(center rendim.Vec3d, radius float64, r rendim.Ray) float64 {
 	oc := r.Origin().Subtract(center)
 	a := r.Direction().Dot(r.Direction())
 	b := 2.0 * oc.Dot(r.Direction())
 	c := oc.Dot(oc) - radius*radius
 	discriminant := b*b - 4*a*c
-	return (discriminant > 0)
+
+	if discriminant < 0.0 {
+		return -1.0
+	}
+
+	return (-b - math.Sqrt(discriminant)) / (2.0 * a)
 }
