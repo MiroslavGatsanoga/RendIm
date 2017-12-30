@@ -22,8 +22,8 @@ func Render() image.Image {
 	world := HitableList{}
 	world = append(world, NewSphere(NewVec3d(0.0, 0.0, -1.0), 0.5, Lambertian{albedo: NewVec3d(0.8, 0.3, 0.3)}))
 	world = append(world, NewSphere(NewVec3d(0.0, -100.5, -1.0), 100.0, Lambertian{albedo: NewVec3d(0.8, 0.8, 0.0)}))
-	world = append(world, NewSphere(NewVec3d(1.0, 0.0, -1.0), 0.5, Metal{albedo: NewVec3d(0.8, 0.6, 0.2)}))
-	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), 0.5, Metal{albedo: NewVec3d(0.8, 0.8, 0.8)}))
+	world = append(world, NewSphere(NewVec3d(1.0, 0.0, -1.0), 0.5, Metal{albedo: NewVec3d(0.8, 0.6, 0.2), fuzz: 1.0}))
+	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), 0.5, Metal{albedo: NewVec3d(0.8, 0.8, 0.8), fuzz: 0.3}))
 
 	//camera setup
 	cam := NewCamera()
