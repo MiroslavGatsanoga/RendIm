@@ -79,3 +79,16 @@ func (v Vec3d) Cross(v2 Vec3d) Vec3d {
 func (v Vec3d) UnitVector() Vec3d {
 	return v.DivideScalar(v.Length())
 }
+
+func RandomInUnitSphere() Vec3d {
+	p := NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+	for p.Dot(p) >= 1.0 {
+		p = NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+	}
+	return p
+}
+
+func Reflect(v, n Vec3d) Vec3d {
+	tmp := n.MultiplyScalar(2.0 * v.Dot(n))
+	return v.Subtract(tmp)
+}

@@ -5,9 +5,10 @@ type Hitable interface {
 }
 
 type HitRecord struct {
-	t      float64
-	P      Vec3d
-	Normal Vec3d
+	t        float64
+	P        Vec3d
+	Normal   Vec3d
+	material Material
 }
 
 type HitableList []Hitable
@@ -25,6 +26,7 @@ func (hl HitableList) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) boo
 			rec.t = tempRec.t
 			rec.P = tempRec.P
 			rec.Normal = tempRec.Normal
+			rec.material = tempRec.material
 		}
 	}
 	return hitAnything

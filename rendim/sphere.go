@@ -3,12 +3,13 @@ package rendim
 import "math"
 
 type Sphere struct {
-	Center Vec3d
-	Radius float64
+	Center   Vec3d
+	Radius   float64
+	material Material
 }
 
-func NewSphere(center Vec3d, radius float64) Sphere {
-	return Sphere{Center: center, Radius: radius}
+func NewSphere(center Vec3d, radius float64, material Material) Sphere {
+	return Sphere{Center: center, Radius: radius, material: material}
 }
 
 func (s Sphere) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool {
@@ -19,6 +20,7 @@ func (s Sphere) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool {
 	discriminant := b*b - a*c
 
 	if discriminant > 0.0 {
+		rec.material = s.material
 		temp := (-b - math.Sqrt(discriminant)) / a
 		if temp > tMin && temp < tMax {
 			rec.t = temp
