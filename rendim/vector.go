@@ -92,3 +92,19 @@ func Reflect(v, n Vec3d) Vec3d {
 	tmp := n.MultiplyScalar(2.0 * v.Dot(n))
 	return v.Subtract(tmp)
 }
+
+func Refract(v, n Vec3d, NiOverNt float64) (isRefracted bool, refracted Vec3d) {
+	uv := v.UnitVector()
+	dt := uv.Dot(n)
+	discriminant := 1.0 - NiOverNt*NiOverNt*(1.0-dt*dt)
+	if discriminant > 0.0 {
+		refracted = uv.
+			Subtract(n.MultiplyScalar(dt)).
+			MultiplyScalar(NiOverNt).
+			Subtract(n.MultiplyScalar(math.Sqrt(discriminant)))
+
+		return true, refracted
+	}
+
+	return false, Vec3d{}
+}
