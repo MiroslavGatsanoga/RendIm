@@ -24,6 +24,7 @@ func Render() image.Image {
 	world = append(world, NewSphere(NewVec3d(0.0, -100.5, -1.0), 100.0, Lambertian{albedo: NewVec3d(0.8, 0.8, 0.0)}))
 	world = append(world, NewSphere(NewVec3d(1.0, 0.0, -1.0), 0.5, Metal{albedo: NewVec3d(0.8, 0.6, 0.2), fuzz: 0.0}))
 	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), 0.5, Dielectric{refIdx: 1.5}))
+	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), -0.45, Dielectric{refIdx: 1.5}))
 
 	//camera setup
 	cam := NewCamera()

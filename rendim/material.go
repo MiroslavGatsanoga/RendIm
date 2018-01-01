@@ -37,25 +37,40 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isSca
 	*attenuation = NewVec3d(1.0, 1.0, 1.0)
 	var (
 		outwardNormal Vec3d
-		ni_over_nt    float64
+		NiOverNt      float64
+		cosine        float64
 	)
 
-	rInNormalDot := rayIn.Direction().Dot(rec.Normal)
+	rayInDotNormal := rayIn.Direction().Dot(rec.Normal)
 
-	if rInNormalDot > 0.0 {
+	if rayInDotNormal > 0.0 {
 		outwardNormal = rec.Normal.MultiplyScalar(-1.0)
-		ni_over_nt = d.refIdx
+		NiOverNt = d.refIdx
+		cosine = d.refIdx * rayInDotNormal / rayIn.Direction().Length()
 	} else {
 		outwardNormal = rec.Normal
-		ni_over_nt = 1.0 / d.refIdx
+		NiOverNt = 1.0 / d.refIdx
+		cosine = -rayInDotNormal / rayIn.Direction().Length()
 	}
 
-	if isRefracted, refracted := refract(rayIn.Direction(), outwardNormal, ni_over_nt); isRefracted {
-		scattered = NewRay(rec.P, refracted)
+	var (
+		reflectProb float64
+		refracted   Vec3d
+	)
 
+	isRefracted, refracted := refract(rayIn.Direction(), outwardNormal, NiOverNt)
+
+	if isRefracted {
+		reflectProb = schlick(cosine, d.refIdx)
 	} else {
+		reflectProb = 1.0
+	}
+
+	if rnd.Float64() < reflectProb {
 		reflected := reflect(rayIn.Direction(), rec.Normal)
 		scattered = NewRay(rec.P, reflected)
+	} else {
+		scattered = NewRay(rec.P, refracted)
 	}
 
 	return true, scattered
@@ -88,4 +103,10 @@ func refract(v, n Vec3d, NiOverNt float64) (isRefracted bool, refracted Vec3d) {
 	}
 
 	return false, Vec3d{}
+}
+
+func schlick(cosine, refIdx float64) float64 {
+	r0 := (1.0 - refIdx) / (1.0 + refIdx)
+	r0 = r0 * r0
+	return r0 + (1.0-r0)*math.Pow((1.0-cosine), 5.0)
 }
