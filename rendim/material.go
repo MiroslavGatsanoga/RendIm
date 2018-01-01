@@ -1,5 +1,7 @@
 package rendim
 
+import "math"
+
 type Material interface {
 	Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (bool, Ray)
 }
@@ -9,7 +11,7 @@ type Lambertian struct {
 }
 
 func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isScattered bool, scattered Ray) {
-	target := rec.P.Add(rec.Normal).Add(RandomInUnitSphere())
+	target := rec.P.Add(rec.Normal).Add(randomInUnitSphere())
 	scattered = NewRay(rec.P, target.Subtract(rec.P))
 	*attenuation = l.albedo
 	return true, scattered
@@ -21,8 +23,8 @@ type Metal struct {
 }
 
 func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isScattered bool, scattered Ray) {
-	reflected := Reflect(rayIn.Direction().UnitVector(), rec.Normal)
-	scattered = NewRay(rec.P, reflected.Add(RandomInUnitSphere().MultiplyScalar(m.fuzz)))
+	reflected := reflect(rayIn.Direction().UnitVector(), rec.Normal)
+	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere().MultiplyScalar(m.fuzz)))
 	*attenuation = m.albedo
 	return scattered.Direction().Dot(rec.Normal) > 0, scattered
 }
@@ -48,13 +50,42 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isSca
 		ni_over_nt = 1.0 / d.refIdx
 	}
 
-	if isRefracted, refracted := Refract(rayIn.Direction(), outwardNormal, ni_over_nt); isRefracted {
+	if isRefracted, refracted := refract(rayIn.Direction(), outwardNormal, ni_over_nt); isRefracted {
 		scattered = NewRay(rec.P, refracted)
 
 	} else {
-		reflected := Reflect(rayIn.Direction(), rec.Normal) //todo: direction unit vector ?
+		reflected := reflect(rayIn.Direction(), rec.Normal)
 		scattered = NewRay(rec.P, reflected)
 	}
 
 	return true, scattered
+}
+
+func randomInUnitSphere() Vec3d {
+	p := NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+	for p.Dot(p) >= 1.0 {
+		p = NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+	}
+	return p
+}
+
+func reflect(v, n Vec3d) Vec3d {
+	tmp := n.MultiplyScalar(2.0 * v.Dot(n))
+	return v.Subtract(tmp)
+}
+
+func refract(v, n Vec3d, NiOverNt float64) (isRefracted bool, refracted Vec3d) {
+	uv := v.UnitVector()
+	dt := uv.Dot(n)
+	discriminant := 1.0 - NiOverNt*NiOverNt*(1.0-dt*dt)
+	if discriminant > 0.0 {
+		refracted = uv.
+			Subtract(n.MultiplyScalar(dt)).
+			MultiplyScalar(NiOverNt).
+			Subtract(n.MultiplyScalar(math.Sqrt(discriminant)))
+
+		return true, refracted
+	}
+
+	return false, Vec3d{}
 }

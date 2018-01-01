@@ -79,32 +79,3 @@ func (v Vec3d) Cross(v2 Vec3d) Vec3d {
 func (v Vec3d) UnitVector() Vec3d {
 	return v.DivideScalar(v.Length())
 }
-
-func RandomInUnitSphere() Vec3d {
-	p := NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
-	for p.Dot(p) >= 1.0 {
-		p = NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
-	}
-	return p
-}
-
-func Reflect(v, n Vec3d) Vec3d {
-	tmp := n.MultiplyScalar(2.0 * v.Dot(n))
-	return v.Subtract(tmp)
-}
-
-func Refract(v, n Vec3d, NiOverNt float64) (isRefracted bool, refracted Vec3d) {
-	uv := v.UnitVector()
-	dt := uv.Dot(n)
-	discriminant := 1.0 - NiOverNt*NiOverNt*(1.0-dt*dt)
-	if discriminant > 0.0 {
-		refracted = uv.
-			Subtract(n.MultiplyScalar(dt)).
-			MultiplyScalar(NiOverNt).
-			Subtract(n.MultiplyScalar(math.Sqrt(discriminant)))
-
-		return true, refracted
-	}
-
-	return false, Vec3d{}
-}
