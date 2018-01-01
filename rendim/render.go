@@ -27,7 +27,12 @@ func Render() image.Image {
 	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), -0.45, Dielectric{refIdx: 1.5}))
 
 	//camera setup
-	cam := NewCamera()
+	lookFrom := NewVec3d(-2.0, 2.0, 1.0)
+	lookAt := NewVec3d(0.0, 0.0, -1.0)
+	vUp := NewVec3d(0.0, 1.0, 0.0)
+	vFov := 20.0 //vertical field of view in degrees
+	aspectRatio := float64(width) / float64(height)
+	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio)
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for py := 0; py < height; py++ {

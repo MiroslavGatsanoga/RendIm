@@ -71,7 +71,7 @@ func (v Vec3d) Dot(v2 Vec3d) float64 {
 func (v Vec3d) Cross(v2 Vec3d) Vec3d {
 	return Vec3d{e: [3]float64{
 		v.e[1]*v2.e[2] - v.e[2]*v2.e[1],
-		-(v.e[0]*v2.e[2] - v.e[2]*v2.e[0]),
+		-v.e[0]*v2.e[2] + v.e[2]*v2.e[0],
 		v.e[0]*v2.e[1] - v.e[1]*v2.e[0],
 	}}
 }
