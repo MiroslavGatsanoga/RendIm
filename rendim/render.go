@@ -9,31 +9,25 @@ import (
 )
 
 const (
-	width   = 400
-	height  = 200
-	samples = 100
+	width   = 1200
+	height  = 800
+	samples = 50
 )
 
 var rnd = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
 func Render() image.Image {
-
 	//scene setup
-	world := HitableList{}
-	world = append(world, NewSphere(NewVec3d(0.0, 0.0, -1.0), 0.5, Lambertian{albedo: NewVec3d(0.1, 0.2, 0.5)}))
-	world = append(world, NewSphere(NewVec3d(0.0, -100.5, -1.0), 100.0, Lambertian{albedo: NewVec3d(0.8, 0.8, 0.0)}))
-	world = append(world, NewSphere(NewVec3d(1.0, 0.0, -1.0), 0.5, Metal{albedo: NewVec3d(0.8, 0.6, 0.2), fuzz: 0.0}))
-	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), 0.5, Dielectric{refIdx: 1.5}))
-	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), -0.45, Dielectric{refIdx: 1.5}))
+	world := randomScene()
 
 	//camera setup
-	lookFrom := NewVec3d(3.0, 3.0, 2.0)
-	lookAt := NewVec3d(0.0, 0.0, -1.0)
+	lookFrom := NewVec3d(13.0, 2.0, 3.0)
+	lookAt := NewVec3d(0.0, 0.0, 0.0)
 	vUp := NewVec3d(0.0, 1.0, 0.0)
 	vFov := 20.0 //vertical field of view in degrees
 	aspectRatio := float64(width) / float64(height)
-	distToFocus := lookFrom.Subtract(lookAt).Length()
-	aperture := 2.0
+	distToFocus := 10.0
+	aperture := 0.1
 	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus)
 
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
@@ -90,4 +84,32 @@ func rayColor(r Ray, world *HitableList, depth int) Vec3d {
 	blue := NewVec3d(0.5, 0.7, 1.0)
 	clr := white.MultiplyScalar(1.0 - t).Add(blue.MultiplyScalar(t))
 	return clr
+}
+
+func randomScene() HitableList {
+	list := HitableList{}
+	list = append(list, NewSphere(NewVec3d(0.0, -1000.0, 0), 1000, Lambertian{albedo: NewVec3d(0.5, 0.5, 0.5)}))
+	for a := -11; a < 11; a++ {
+		for b := -11; b < 11; b++ {
+			chooseMaterial := rnd.Float64()
+			center := NewVec3d(float64(a)+0.9*rnd.Float64(), 0.2, float64(b)+0.9*rnd.Float64())
+			if center.Subtract(NewVec3d(4.0, 0.2, 0.0)).Length() > 0.9 {
+				if chooseMaterial < 0.8 { //diffuse
+					list = append(list, NewSphere(center, 0.2,
+						Lambertian{albedo: NewVec3d(rnd.Float64()*rnd.Float64(), rnd.Float64()*rnd.Float64(), rnd.Float64()*rnd.Float64())}))
+				} else if chooseMaterial < 0.95 { //metal
+					list = append(list, NewSphere(center, 0.2,
+						Metal{albedo: NewVec3d(0.5*(1.0+rnd.Float64()), 0.5*(1.0+rnd.Float64()), 0.5*(1.0+rnd.Float64())), fuzz: 0.5 * rnd.Float64()}))
+				} else { //glass
+					list = append(list, NewSphere(center, 0.2, Dielectric{refIdx: 1.5}))
+				}
+			}
+		}
+	}
+
+	list = append(list, NewSphere(NewVec3d(0.0, 1.0, 0.0), 1.0, Dielectric{refIdx: 1.5}))
+	list = append(list, NewSphere(NewVec3d(-4.0, 1.0, 0.0), 1.0, Lambertian{albedo: NewVec3d(0.4, 0.2, 0.1)}))
+	list = append(list, NewSphere(NewVec3d(4.0, 1.0, 0.0), 1.0, Metal{albedo: NewVec3d(0.7, 0.6, 0.5), fuzz: 0.0}))
+
+	return list
 }
