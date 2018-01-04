@@ -1,10 +1,13 @@
 package rendim
 
 import (
+	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"math"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -30,11 +33,18 @@ func Render() image.Image {
 	aperture := 0.1
 	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus)
 
+	var (
+		py, px, s int
+	)
+
+	done := make(chan bool)
+	go showProgress(&py, &px, &s, done)
+
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for py := 0; py < height; py++ {
-		for px := 0; px < width; px++ {
+	for py = 0; py < height; py++ {
+		for px = 0; px < width; px++ {
 			var rayClr Vec3d
-			for s := 0; s < samples; s++ {
+			for s = 0; s < samples; s++ {
 				u := (float64(px) + rnd.Float64()) / float64(width)
 				v := (float64(height-py) + rnd.Float64()) / float64(height)
 				r := cam.GetRay(u, v)
@@ -55,6 +65,9 @@ func Render() image.Image {
 			img.Set(px, py, clr)
 		}
 	}
+
+	done <- true
+	<-done
 
 	return img
 }
@@ -112,4 +125,30 @@ func randomScene() HitableList {
 	list = append(list, NewSphere(NewVec3d(4.0, 1.0, 0.0), 1.0, Metal{albedo: NewVec3d(0.7, 0.6, 0.5), fuzz: 0.0}))
 
 	return list
+}
+
+func showProgress(py, px, s *int, done chan bool) {
+	ticker := time.NewTicker(time.Millisecond * 200)
+
+	for {
+		select {
+		case <-ticker.C:
+			cy, cx, cs := (*py), (*px), (*s)
+			opNum := (cy * width * samples) + (cx * samples) + cs
+			progress := float64(opNum) / float64(width*height*samples)
+			progressPercent := int(100.0 * progress)
+
+			var progressBar bytes.Buffer
+			for i := 0; i < progressPercent/2; i++ {
+				progressBar.WriteString("=")
+			}
+			progressBar.WriteString(">")
+
+			fmt.Printf("\r[%-50s] %d %%", progressBar.String(), progressPercent)
+		case <-done:
+			fmt.Printf("\r[%50s] Done\n", strings.Repeat("=", 50))
+			done <- true
+			return
+		}
+	}
 }
