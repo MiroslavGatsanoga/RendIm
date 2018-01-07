@@ -128,8 +128,9 @@ func randomScene() HitableList {
 }
 
 func showProgress(py, px, s *int, done chan bool) {
-	ticker := time.NewTicker(time.Millisecond * 200)
-
+	const tickIntervalMs = 200
+	ticker := time.NewTicker(time.Millisecond * tickIntervalMs)
+	elapsed := 0
 	for {
 		select {
 		case <-ticker.C:
@@ -144,9 +145,11 @@ func showProgress(py, px, s *int, done chan bool) {
 			}
 			progressBar.WriteString(">")
 
-			fmt.Printf("\r[%-50s] %d %%", progressBar.String(), progressPercent)
+			elapsed += tickIntervalMs
+			elapsedDuration := time.Second * time.Duration(elapsed/1000)
+			fmt.Printf("\r[%-50s] %d %% %v", progressBar.String(), progressPercent, elapsedDuration)
 		case <-done:
-			fmt.Printf("\r[%50s] Done\n", strings.Repeat("=", 50))
+			fmt.Printf("\r[%50s] Done                    \n", strings.Repeat("=", 50))
 			done <- true
 			return
 		}
