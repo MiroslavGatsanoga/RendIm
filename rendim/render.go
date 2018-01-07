@@ -43,7 +43,7 @@ func Render() image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for py = 0; py < height; py++ {
 		for px = 0; px < width; px++ {
-			var rayClr Vec3d
+			var rayClr Color
 			for s = 0; s < samples; s++ {
 				u := (float64(px) + rnd.Float64()) / float64(width)
 				v := (float64(height-py) + rnd.Float64()) / float64(height)
@@ -51,16 +51,12 @@ func Render() image.Image {
 				rayClr = rayClr.Add(rayColor(r, &world, 0))
 			}
 			rayClr = rayClr.DivideScalar(samples)
-			rayClrGamma := NewVec3d(
-				math.Sqrt(rayClr.X()),
-				math.Sqrt(rayClr.Y()),
-				math.Sqrt(rayClr.Z()))
+			rayClrGamma := Color{
+				R: math.Sqrt(rayClr.R),
+				G: math.Sqrt(rayClr.G),
+				B: math.Sqrt(rayClr.B)}
 
-			ir := uint8(255.99 * rayClrGamma.X())
-			ig := uint8(255.99 * rayClrGamma.Y())
-			ib := uint8(255.99 * rayClrGamma.Z())
-
-			clr := color.RGBA{R: ir, G: ig, B: ib, A: 255}
+			clr := rayClrGamma.ToRGBA()
 
 			img.Set(px, py, clr)
 		}
@@ -72,36 +68,32 @@ func Render() image.Image {
 	return img
 }
 
-func rayColor(r Ray, world *HitableList, depth int) Vec3d {
+func rayColor(r Ray, world *HitableList, depth int) Color {
 	rec := &HitRecord{}
 	if world.Hit(r, 0.001, math.MaxFloat64, rec) {
-		attenuation := &Vec3d{}
+		attenuation := &Color{}
 		if depth < 50 {
 			isScattered, scattered := rec.material.Scatter(r, *rec, attenuation)
 			if isScattered {
 				clr := rayColor(scattered, world, depth+1)
-				x := attenuation.X() * clr.X()
-				y := attenuation.Y() * clr.Y()
-				z := attenuation.Z() * clr.Z()
-
-				return NewVec3d(x, y, z)
+				return attenuation.Multiply(clr)
 			}
 		}
 
-		return NewVec3d(0.0, 0.0, 0.0)
+		return Color{}
 	}
 
 	unitDirection := r.Direction().UnitVector()
 	t := 0.5 * (unitDirection.Y() + 1.0)
-	white := NewVec3d(1.0, 1.0, 1.0)
-	blue := NewVec3d(0.5, 0.7, 1.0)
+	white := Color{R: 1.0, G: 1.0, B: 1.0}
+	blue := Color{R: 0.5, G: 0.7, B: 1.0}
 	clr := white.MultiplyScalar(1.0 - t).Add(blue.MultiplyScalar(t))
 	return clr
 }
 
 func randomScene() HitableList {
 	list := HitableList{}
-	list = append(list, NewSphere(NewVec3d(0.0, -1000.0, 0), 1000, Lambertian{albedo: NewVec3d(0.5, 0.5, 0.5)}))
+	list = append(list, NewSphere(NewVec3d(0.0, -1000.0, 0), 1000, Lambertian{albedo: Color{R: 0.5, G: 0.5, B: 0.5}}))
 	for a := -11; a < 11; a++ {
 		for b := -11; b < 11; b++ {
 			chooseMaterial := rnd.Float64()
@@ -109,10 +101,10 @@ func randomScene() HitableList {
 			if center.Subtract(NewVec3d(4.0, 0.2, 0.0)).Length() > 0.9 {
 				if chooseMaterial < 0.8 { //diffuse
 					list = append(list, NewSphere(center, 0.2,
-						Lambertian{albedo: NewVec3d(rnd.Float64()*rnd.Float64(), rnd.Float64()*rnd.Float64(), rnd.Float64()*rnd.Float64())}))
+						Lambertian{albedo: Color{R: rnd.Float64() * rnd.Float64(), G: rnd.Float64() * rnd.Float64(), B: rnd.Float64() * rnd.Float64()}}))
 				} else if chooseMaterial < 0.95 { //metal
 					list = append(list, NewSphere(center, 0.2,
-						Metal{albedo: NewVec3d(0.5*(1.0+rnd.Float64()), 0.5*(1.0+rnd.Float64()), 0.5*(1.0+rnd.Float64())), fuzz: 0.5 * rnd.Float64()}))
+						Metal{albedo: Color{R: 0.5 * (1.0 + rnd.Float64()), G: 0.5 * (1.0 + rnd.Float64()), B: 0.5 * (1.0 + rnd.Float64())}, fuzz: 0.5 * rnd.Float64()}))
 				} else { //glass
 					list = append(list, NewSphere(center, 0.2, Dielectric{refIdx: 1.5}))
 				}
@@ -121,8 +113,8 @@ func randomScene() HitableList {
 	}
 
 	list = append(list, NewSphere(NewVec3d(0.0, 1.0, 0.0), 1.0, Dielectric{refIdx: 1.5}))
-	list = append(list, NewSphere(NewVec3d(-4.0, 1.0, 0.0), 1.0, Lambertian{albedo: NewVec3d(0.4, 0.2, 0.1)}))
-	list = append(list, NewSphere(NewVec3d(4.0, 1.0, 0.0), 1.0, Metal{albedo: NewVec3d(0.7, 0.6, 0.5), fuzz: 0.0}))
+	list = append(list, NewSphere(NewVec3d(-4.0, 1.0, 0.0), 1.0, Lambertian{albedo: Color{R: 0.4, G: 0.2, B: 0.1}}))
+	list = append(list, NewSphere(NewVec3d(4.0, 1.0, 0.0), 1.0, Metal{albedo: Color{R: 0.7, G: 0.6, B: 0.5}, fuzz: 0.0}))
 
 	return list
 }

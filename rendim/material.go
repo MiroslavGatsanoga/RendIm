@@ -3,14 +3,14 @@ package rendim
 import "math"
 
 type Material interface {
-	Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (bool, Ray)
+	Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (bool, Ray)
 }
 
 type Lambertian struct {
-	albedo Vec3d
+	albedo Color
 }
 
-func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isScattered bool, scattered Ray) {
+func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
 	target := rec.P.Add(rec.Normal).Add(randomInUnitSphere())
 	scattered = NewRay(rec.P, target.Subtract(rec.P))
 	*attenuation = l.albedo
@@ -18,11 +18,11 @@ func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isSca
 }
 
 type Metal struct {
-	albedo Vec3d
+	albedo Color
 	fuzz   float64
 }
 
-func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isScattered bool, scattered Ray) {
+func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
 	reflected := reflect(rayIn.Direction().UnitVector(), rec.Normal)
 	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere().MultiplyScalar(m.fuzz)))
 	*attenuation = m.albedo
@@ -33,8 +33,8 @@ type Dielectric struct {
 	refIdx float64
 }
 
-func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Vec3d) (isScattered bool, scattered Ray) {
-	*attenuation = NewVec3d(1.0, 1.0, 1.0)
+func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
+	*attenuation = Color{R: 1.0, G: 1.0, B: 1.0}
 	var (
 		outwardNormal Vec3d
 		NiOverNt      float64
