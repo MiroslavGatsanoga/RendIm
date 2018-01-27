@@ -5,4 +5,4 @@ Image from the cover of the book:
 
 ![alt text](https://github.com/MiroslavGatsanoga/RendIm/blob/master/out.png)
 
-Rendering the image took **48m 15s** on machine with Intel Core i5-4210H CPU 2.90 GHz
+Rendering the image with 100 samples per pixel took **49m 4s** on machine with Intel Core i5-4210H CPU 2.90 GHz

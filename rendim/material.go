@@ -1,6 +1,9 @@
 package rendim
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type Material interface {
 	Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (bool, Ray)
@@ -66,7 +69,7 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isSca
 		reflectProb = 1.0
 	}
 
-	if rnd.Float64() < reflectProb {
+	if rand.Float64() < reflectProb {
 		reflected := reflect(rayIn.Direction(), rec.Normal)
 		scattered = NewRay(rec.P, reflected)
 	} else {
@@ -77,9 +80,9 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isSca
 }
 
 func randomInUnitSphere() Vec3d {
-	p := NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+	p := NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
 	for p.Dot(p) >= 1.0 {
-		p = NewVec3d(rnd.Float64(), rnd.Float64(), rnd.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+		p = NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
 	}
 	return p
 }
