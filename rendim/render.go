@@ -197,7 +197,7 @@ func randomScene(width, height int) Scene {
 			center := NewVec3d(float64(a)+0.9*rnd.Float64(), 0.2, float64(b)+0.9*rnd.Float64())
 			if center.Subtract(NewVec3d(4.0, 0.2, 0.0)).Length() > 0.9 {
 				if chooseMaterial < 0.8 { //diffuse
-					world = append(world, NewSphere(center, 0.2,
+					world = append(world, NewMovingSphere(center, center.Add(NewVec3d(0, 0.5*rnd.Float64(), 0)), 0.0, 1.0, 0.2,
 						Lambertian{albedo: Color{R: rnd.Float64() * rnd.Float64(), G: rnd.Float64() * rnd.Float64(), B: rnd.Float64() * rnd.Float64()}}))
 				} else if chooseMaterial < 0.95 { //metal
 					world = append(world, NewSphere(center, 0.2,
@@ -221,8 +221,8 @@ func randomScene(width, height int) Scene {
 	aspectRatio := float64(width) / float64(height)
 
 	distToFocus := 10.0
-	aperture := 0.1
-	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus)
+	aperture := 0.0
+	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus, 0.0, 1.0)
 
 	return Scene{camera: cam, world: world}
 }
@@ -244,7 +244,7 @@ func testScene(width, height int) Scene {
 
 	distToFocus := lookFrom.Subtract(lookAt).Length()
 	aperture := 0.5
-	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus)
+	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus, 0.0, 1.0)
 
 	return Scene{camera: cam, world: world}
 }

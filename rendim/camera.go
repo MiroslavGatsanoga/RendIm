@@ -12,14 +12,17 @@ type Camera struct {
 	vertical        Vec3d
 	u, v, w         Vec3d
 	lensRadius      float64
+	time0, time1    float64
 }
 
-func NewCamera(lookFrom, lookAt, vUp Vec3d, vFov, aspect, aperture, focusDist float64) Camera {
+func NewCamera(lookFrom, lookAt, vUp Vec3d, vFov, aspect, aperture, focusDist, t0, t1 float64) Camera {
 	theta := vFov * math.Pi / 180.0
 	halfHeight := math.Tan(theta / 2.0)
 	halfWidth := aspect * halfHeight
 
 	c := Camera{}
+	c.time0 = t0
+	c.time1 = t1
 	c.lensRadius = aperture / 2.0
 	c.origin = lookFrom
 	c.w = lookFrom.Subtract(lookAt).UnitVector()
@@ -34,8 +37,9 @@ func NewCamera(lookFrom, lookAt, vUp Vec3d, vFov, aspect, aperture, focusDist fl
 func (c Camera) GetRay(s, t float64) Ray {
 	rd := randomInUnitDisk().MultiplyScalar(c.lensRadius)
 	offset := c.u.MultiplyScalar(rd.X()).Add(c.v.MultiplyScalar(rd.Y()))
+	time := c.time0 + rand.Float64()*(c.time1-c.time0)
 	rayDirection := c.lowerLeftCorner.Add(c.horizontal.MultiplyScalar(s)).Add(c.vertical.MultiplyScalar(t)).Subtract(c.origin)
-	return NewRay(c.origin.Add(offset), rayDirection.Subtract(offset))
+	return NewRay(c.origin.Add(offset), rayDirection.Subtract(offset), time)
 }
 
 func randomInUnitDisk() Vec3d {

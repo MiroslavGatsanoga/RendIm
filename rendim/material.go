@@ -15,7 +15,7 @@ type Lambertian struct {
 
 func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
 	target := rec.P.Add(rec.Normal).Add(randomInUnitSphere())
-	scattered = NewRay(rec.P, target.Subtract(rec.P))
+	scattered = NewRay(rec.P, target.Subtract(rec.P), 0.0)
 	*attenuation = l.albedo
 	return true, scattered
 }
@@ -27,7 +27,7 @@ type Metal struct {
 
 func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
 	reflected := reflect(rayIn.Direction().UnitVector(), rec.Normal)
-	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere().MultiplyScalar(m.fuzz)))
+	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere().MultiplyScalar(m.fuzz)), 0.0)
 	*attenuation = m.albedo
 	return scattered.Direction().Dot(rec.Normal) > 0, scattered
 }
@@ -71,9 +71,9 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isSca
 
 	if rand.Float64() < reflectProb {
 		reflected := reflect(rayIn.Direction(), rec.Normal)
-		scattered = NewRay(rec.P, reflected)
+		scattered = NewRay(rec.P, reflected, 0.0)
 	} else {
-		scattered = NewRay(rec.P, refracted)
+		scattered = NewRay(rec.P, refracted, 0.0)
 	}
 
 	return true, scattered
