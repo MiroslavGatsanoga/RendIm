@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>        
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<button class="btn btn-primary" onclick="openWebsocket()">Start render</button>
+<span id="status"></span>
+<div id="render-result" class="hidden">
+    <canvas id="canvas" width="500" height="500" style="border:1px solid #8d8282; background:#000000"></canvas>
+</div>
+ 
+<script type="text/javascript">
+    function openWebsocket() {
+          var ws = new WebSocket("ws://localhost:3000/websocket");
+ 
+            $("#status").html("Rendering...");
+            $("#render-result").removeClass("hidden");
+
+          ws.onmessage = function (evt)
+          {
+              var pixelData = JSON.parse(evt.data)
+            setPixel(pixelData)
+          };
+ 
+          ws.onclose = function()
+          {
+              $("#status").html("Connection closed.");
+          };
+ 
+    }
+ 
+   var ctx = $("#canvas")[0].getContext('2d');
+ 
+   function setPixel(pixelData) {
+       r = pixelData.R;
+       g = pixelData.G;
+       b = pixelData.B;
+       a = 255;
+       ctx.fillStyle = "rgba("+r+","+g+","+b+","+(a/255)+")";  
+       ctx.fillRect( pixelData.X, pixelData.Y, 1, 1 );
+   }
+</script>
+</body>
+</html>

@@ -21,16 +21,21 @@ const (
 
 var ops uint64
 
-func Render() image.Image {
-	width := 1200
-	height := 800
+type Pixel struct {
+	image.Point
+	R, G, B uint8
+}
+
+func Render(pixels chan Pixel) image.Image {
+	width := 300
+	height := 200
 
 	scene := randomScene(width, height)
 
-	return renderBuckets(width, height, scene)
+	return renderBuckets(width, height, scene, pixels)
 }
 
-func renderBuckets(width, height int, scene Scene) image.Image {
+func renderBuckets(width, height int, scene Scene, pixels chan Pixel) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	buckets := getBuckets(img.Bounds())
@@ -43,7 +48,7 @@ func renderBuckets(width, height int, scene Scene) image.Image {
 	wg.Add(workersCount)
 
 	for w := 0; w < workersCount; w++ {
-		go renderBucket(bucketChan, &scene, img, &wg)
+		go renderBucket(bucketChan, &scene, img, &wg, pixels)
 	}
 
 	for _, b := range buckets {
@@ -102,7 +107,7 @@ func clip(r *image.Rectangle, maxX, maxY int) {
 	r.Max.Y = int(math.Min(float64(r.Max.Y), float64(maxY)))
 }
 
-func renderBucket(buckets <-chan image.Rectangle, scene *Scene, img *image.RGBA, wg *sync.WaitGroup) {
+func renderBucket(buckets chan image.Rectangle, scene *Scene, img *image.RGBA, wg *sync.WaitGroup, pixels chan Pixel) {
 	defer wg.Done()
 
 	width := img.Bounds().Max.X
@@ -111,7 +116,14 @@ func renderBucket(buckets <-chan image.Rectangle, scene *Scene, img *image.RGBA,
 	for b := range buckets {
 		for py := b.Min.Y; py <= b.Max.Y; py++ {
 			for px := b.Min.X; px <= b.Max.X; px++ {
-				img.Set(px, py, pixelColor(px, py, width, height, scene))
+				clr := pixelColor(px, py, width, height, scene)
+				img.Set(px, py, clr)
+				pixels <- Pixel{
+					image.Point{X: px, Y: py},
+					clr.R,
+					clr.G,
+					clr.B,
+				}
 			}
 		}
 	}
