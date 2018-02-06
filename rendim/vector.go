@@ -28,10 +28,6 @@ func (v Vec3d) Length() float64 {
 	return math.Sqrt(v.e[0]*v.e[0] + v.e[1]*v.e[1] + v.e[2]*v.e[2])
 }
 
-func (v Vec3d) LengthSquared() float64 {
-	return v.e[0]*v.e[0] + v.e[1]*v.e[1] + v.e[2]*v.e[2]
-}
-
 func (v Vec3d) MultiplyScalar(s float64) Vec3d {
 	return Vec3d{e: [3]float64{
 		v.e[0] * s,

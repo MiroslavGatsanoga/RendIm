@@ -10,25 +10,25 @@ type Material interface {
 }
 
 type Lambertian struct {
-	albedo Color
+	albedo Texture
 }
 
 func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
 	target := rec.P.Add(rec.Normal).Add(randomInUnitSphere())
 	scattered = NewRay(rec.P, target.Subtract(rec.P), 0.0)
-	*attenuation = l.albedo
+	*attenuation = l.albedo.Value(0, 0, rec.P)
 	return true, scattered
 }
 
 type Metal struct {
-	albedo Color
+	albedo Texture
 	fuzz   float64
 }
 
 func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
 	reflected := reflect(rayIn.Direction().UnitVector(), rec.Normal)
 	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere().MultiplyScalar(m.fuzz)), 0.0)
-	*attenuation = m.albedo
+	*attenuation = m.albedo.Value(0, 0, rec.P)
 	return scattered.Direction().Dot(rec.Normal) > 0, scattered
 }
 

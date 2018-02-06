@@ -199,7 +199,11 @@ func randomScene(width, height int) Scene {
 	rnd := rand.New(rand.NewSource(42))
 
 	world := HitableList{}
-	world = append(world, NewSphere(NewVec3d(0.0, -1000.0, 0), 1000, Lambertian{albedo: Color{R: 0.5, G: 0.5, B: 0.5}}))
+	checker := CheckerTexture{
+		even: ConstantTexture{color: Color{0.2, 0.3, 0.1}},
+		odd:  ConstantTexture{color: Color{0.9, 0.9, 0.9}},
+	}
+	world = append(world, NewSphere(NewVec3d(0.0, -1000.0, 0), 1000, Lambertian{albedo: checker}))
 	for a := -11; a < 11; a++ {
 		for b := -11; b < 11; b++ {
 			chooseMaterial := rnd.Float64()
@@ -207,10 +211,10 @@ func randomScene(width, height int) Scene {
 			if center.Subtract(NewVec3d(4.0, 0.2, 0.0)).Length() > 0.9 {
 				if chooseMaterial < 0.8 { //diffuse
 					world = append(world, NewMovingSphere(center, center.Add(NewVec3d(0, 0.5*rnd.Float64(), 0)), 0.0, 1.0, 0.2,
-						Lambertian{albedo: Color{R: rnd.Float64() * rnd.Float64(), G: rnd.Float64() * rnd.Float64(), B: rnd.Float64() * rnd.Float64()}}))
+						Lambertian{albedo: ConstantTexture{color: Color{R: rnd.Float64() * rnd.Float64(), G: rnd.Float64() * rnd.Float64(), B: rnd.Float64() * rnd.Float64()}}}))
 				} else if chooseMaterial < 0.95 { //metal
 					world = append(world, NewSphere(center, 0.2,
-						Metal{albedo: Color{R: 0.5 * (1.0 + rnd.Float64()), G: 0.5 * (1.0 + rnd.Float64()), B: 0.5 * (1.0 + rnd.Float64())}, fuzz: 0.5 * rnd.Float64()}))
+						Metal{albedo: ConstantTexture{color: Color{R: 0.5 * (1.0 + rnd.Float64()), G: 0.5 * (1.0 + rnd.Float64()), B: 0.5 * (1.0 + rnd.Float64())}}, fuzz: 0.5 * rnd.Float64()}))
 				} else { //glass
 					world = append(world, NewSphere(center, 0.2, Dielectric{refIdx: 1.5}))
 				}
@@ -219,8 +223,8 @@ func randomScene(width, height int) Scene {
 	}
 
 	world = append(world, NewSphere(NewVec3d(0.0, 1.0, 0.0), 1.0, Dielectric{refIdx: 1.5}))
-	world = append(world, NewSphere(NewVec3d(-4.0, 1.0, 0.0), 1.0, Lambertian{albedo: Color{R: 0.4, G: 0.2, B: 0.1}}))
-	world = append(world, NewSphere(NewVec3d(4.0, 1.0, 0.0), 1.0, Metal{albedo: Color{R: 0.7, G: 0.6, B: 0.5}, fuzz: 0.0}))
+	world = append(world, NewSphere(NewVec3d(-4.0, 1.0, 0.0), 1.0, Lambertian{albedo: ConstantTexture{color: Color{R: 0.4, G: 0.2, B: 0.1}}}))
+	world = append(world, NewSphere(NewVec3d(4.0, 1.0, 0.0), 1.0, Metal{albedo: ConstantTexture{color: Color{R: 0.7, G: 0.6, B: 0.5}}, fuzz: 0.0}))
 
 	lookFrom := NewVec3d(13.0, 2.0, 3.0)
 	lookAt := NewVec3d(0.0, 0.0, 0.0)
@@ -240,9 +244,9 @@ func randomScene(width, height int) Scene {
 
 func testScene(width, height int) Scene {
 	world := HitableList{}
-	world = append(world, NewSphere(NewVec3d(0.0, 0.0, -1.0), 0.5, Lambertian{albedo: Color{R: 0.1, G: 0.2, B: 0.5}}))
-	world = append(world, NewSphere(NewVec3d(0.0, -100.5, -1.0), 100.0, Lambertian{albedo: Color{R: 0.8, G: 0.8, B: 0.0}}))
-	world = append(world, NewSphere(NewVec3d(1.0, 0.0, -1.0), 0.5, Metal{albedo: Color{R: 0.8, G: 0.6, B: 0.2}, fuzz: 0.0}))
+	world = append(world, NewSphere(NewVec3d(0.0, 0.0, -1.0), 0.5, Lambertian{albedo: ConstantTexture{color: Color{R: 0.1, G: 0.2, B: 0.5}}}))
+	world = append(world, NewSphere(NewVec3d(0.0, -100.5, -1.0), 100.0, Lambertian{albedo: ConstantTexture{color: Color{R: 0.8, G: 0.8, B: 0.0}}}))
+	world = append(world, NewSphere(NewVec3d(1.0, 0.0, -1.0), 0.5, Metal{albedo: ConstantTexture{color: Color{R: 0.8, G: 0.6, B: 0.2}}, fuzz: 0.0}))
 	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), 0.5, Dielectric{refIdx: 1.5}))
 	world = append(world, NewSphere(NewVec3d(-1.0, 0.0, -1.0), -0.45, Dielectric{refIdx: 1.5}))
 
@@ -258,4 +262,30 @@ func testScene(width, height int) Scene {
 	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus, 0.0, 1.0)
 
 	return Scene{camera: cam, world: world}
+}
+
+func twoSpheres(width, height int) Scene {
+	checker := CheckerTexture{
+		even: ConstantTexture{color: Color{0.2, 0.3, 0.1}},
+		odd:  ConstantTexture{color: Color{0.9, 0.9, 0.9}},
+	}
+
+	world := HitableList{}
+	world = append(world, NewSphere(NewVec3d(0.0, -10.0, 0.0), 10, Lambertian{albedo: checker}))
+	world = append(world, NewSphere(NewVec3d(0.0, 10.0, 0.0), 10, Lambertian{albedo: checker}))
+
+	lookFrom := NewVec3d(13.0, 2.0, 3.0)
+	lookAt := NewVec3d(0.0, 0.0, 0.0)
+
+	vUp := NewVec3d(0.0, 1.0, 0.0)
+	vFov := 20.0 //vertical field of view in degrees
+	aspectRatio := float64(width) / float64(height)
+
+	distToFocus := 10.0
+	aperture := 0.0
+	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus, 0.0, 1.0)
+
+	bvh := HitableList{}
+	bvh = append(bvh, NewBVHNode(world, 0.0, 1.0))
+	return Scene{camera: cam, world: bvh}
 }
