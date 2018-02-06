@@ -27,7 +27,7 @@ type Pixel struct {
 }
 
 func Render(width, height int, pixels chan Pixel) image.Image {
-	scene := randomScene(width, height)
+	scene := twoPerlinSpheres(width, height)
 
 	return renderBuckets(width, height, scene, pixels)
 }
@@ -264,15 +264,12 @@ func testScene(width, height int) Scene {
 	return Scene{camera: cam, world: world}
 }
 
-func twoSpheres(width, height int) Scene {
-	checker := CheckerTexture{
-		even: ConstantTexture{color: Color{0.2, 0.3, 0.1}},
-		odd:  ConstantTexture{color: Color{0.9, 0.9, 0.9}},
-	}
+func twoPerlinSpheres(width, height int) Scene {
+	perlinTexture := NoiseTexture{scale: 4.0}
 
 	world := HitableList{}
-	world = append(world, NewSphere(NewVec3d(0.0, -10.0, 0.0), 10, Lambertian{albedo: checker}))
-	world = append(world, NewSphere(NewVec3d(0.0, 10.0, 0.0), 10, Lambertian{albedo: checker}))
+	world = append(world, NewSphere(NewVec3d(0.0, -1000.0, 0.0), 1000, Lambertian{albedo: perlinTexture}))
+	world = append(world, NewSphere(NewVec3d(0.0, 2.0, 0.0), 2, Lambertian{albedo: perlinTexture}))
 
 	lookFrom := NewVec3d(13.0, 2.0, 3.0)
 	lookAt := NewVec3d(0.0, 0.0, 0.0)
