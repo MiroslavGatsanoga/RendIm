@@ -2,6 +2,7 @@ package rendim
 
 type Hitable interface {
 	Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool
+	BoundingBox(t0, t1 float64, box *AABB) bool
 }
 
 type HitRecord struct {
@@ -30,4 +31,8 @@ func (hl HitableList) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) boo
 		}
 	}
 	return hitAnything
+}
+
+func (hl HitableList) Len() int {
+	return len(hl)
 }

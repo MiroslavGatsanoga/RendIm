@@ -12,6 +12,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var (
+	width  = 300
+	height = 200
+)
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -34,8 +39,8 @@ func main() {
 		}
 		fmt.Println("Client initiated a render...")
 
-		pixels := make(chan rendim.Pixel, 300*200)
-		go rendim.Render(pixels)
+		pixels := make(chan rendim.Pixel, width*height)
+		go rendim.Render(width, height, pixels)
 
 		for {
 			time.Sleep(2 * time.Second)

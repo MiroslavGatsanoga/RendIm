@@ -44,3 +44,18 @@ func (s MovingSphere) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) boo
 
 	return false
 }
+
+func (s MovingSphere) BoundingBox(t0, t1 float64, box *AABB) bool {
+	box0 := AABB{
+		Min: s.Center(t0).Subtract(NewVec3d(s.Radius, s.Radius, s.Radius)),
+		Max: s.Center(t0).Add(NewVec3d(s.Radius, s.Radius, s.Radius)),
+	}
+
+	box1 := AABB{
+		Min: s.Center(t1).Subtract(NewVec3d(s.Radius, s.Radius, s.Radius)),
+		Max: s.Center(t1).Add(NewVec3d(s.Radius, s.Radius, s.Radius)),
+	}
+
+	*box = surroundingBox(box0, box1)
+	return true
+}

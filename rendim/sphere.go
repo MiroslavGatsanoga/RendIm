@@ -39,3 +39,10 @@ func (s Sphere) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool {
 
 	return false
 }
+
+func (s Sphere) BoundingBox(t0, t1 float64, box *AABB) bool {
+	boxMin := s.Center.Subtract(NewVec3d(s.Radius, s.Radius, s.Radius))
+	boxMax := s.Center.Add(NewVec3d(s.Radius, s.Radius, s.Radius))
+	*box = AABB{Min: boxMin, Max: boxMax}
+	return true
+}

@@ -26,10 +26,7 @@ type Pixel struct {
 	R, G, B uint8
 }
 
-func Render(pixels chan Pixel) image.Image {
-	width := 300
-	height := 200
-
+func Render(width, height int, pixels chan Pixel) image.Image {
 	scene := randomScene(width, height)
 
 	return renderBuckets(width, height, scene, pixels)
@@ -236,7 +233,9 @@ func randomScene(width, height int) Scene {
 	aperture := 0.0
 	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus, 0.0, 1.0)
 
-	return Scene{camera: cam, world: world}
+	bvh := HitableList{}
+	bvh = append(bvh, NewBVHNode(world, 0.0, 1.0))
+	return Scene{camera: cam, world: bvh}
 }
 
 func testScene(width, height int) Scene {
