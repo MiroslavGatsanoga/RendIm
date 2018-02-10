@@ -1,6 +1,7 @@
 package rendim
 
 import (
+	"image"
 	"math"
 	"math/rand"
 )
@@ -134,4 +135,42 @@ func perlinGeneratePerm() []int {
 
 	permute(p)
 	return p
+}
+
+type ImageTexture struct {
+	image image.Image
+}
+
+func (t ImageTexture) Value(u, v float64, p Vec3d) Color {
+	nx, ny := t.image.Bounds().Dx(), t.image.Bounds().Dy()
+	i := int(u * float64(nx))
+	j := int((1.0-v)*float64(ny) - 0.001)
+
+	if i < 0 {
+		i = 0
+	}
+	if j < 0 {
+		j = 0
+	}
+	if i > nx-1 {
+		i = nx - 1
+	}
+	if j > ny-1 {
+		j = ny - 1
+	}
+
+	ir, ig, ib, _ := t.image.At(i, j).RGBA()
+	r := float64(ir) / 65535.0
+	g := float64(ig) / 65535.0
+	b := float64(ib) / 65535.0
+
+	return Color{R: r, G: g, B: b}
+}
+
+func getSphereUV(p Vec3d) (u, v float64) {
+	phi := math.Atan2(p.Z(), p.X())
+	theta := math.Asin(p.Y())
+	u = 1.0 - (phi+math.Pi)/(2.0*math.Pi)
+	v = (theta + math.Pi/2.0) / math.Pi
+	return u, v
 }

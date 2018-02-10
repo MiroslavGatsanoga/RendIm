@@ -16,7 +16,7 @@ type Lambertian struct {
 func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
 	target := rec.P.Add(rec.Normal).Add(randomInUnitSphere())
 	scattered = NewRay(rec.P, target.Subtract(rec.P), 0.0)
-	*attenuation = l.albedo.Value(0, 0, rec.P)
+	*attenuation = l.albedo.Value(rec.u, rec.v, rec.P)
 	return true, scattered
 }
 

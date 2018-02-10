@@ -81,39 +81,47 @@ func (n BVHNode) BoundingBox(t0, t1 float64, box *AABB) bool {
 	return true
 }
 
-func (n BVHNode) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool {
+func (n BVHNode) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord) {
 	if n.box.hit(r, tMin, tMax) {
-		leftRec, rightRec := &HitRecord{}, &HitRecord{}
-		hitLeft := (*n.left).Hit(r, tMin, tMax, leftRec)
-		hitRight := (*n.right).Hit(r, tMin, tMax, rightRec)
+		hitLeft, leftRec := (*n.left).Hit(r, tMin, tMax)
+		hitRight, rightRec := (*n.right).Hit(r, tMin, tMax)
 
+		rec := HitRecord{}
 		if hitLeft && hitRight {
 			if leftRec.t < rightRec.t {
 				rec.t = leftRec.t
+				rec.u = leftRec.u
+				rec.v = leftRec.v
 				rec.P = leftRec.P
 				rec.Normal = leftRec.Normal
 				rec.material = leftRec.material
 			} else {
 				rec.t = rightRec.t
+				rec.u = rightRec.u
+				rec.v = rightRec.v
 				rec.P = rightRec.P
 				rec.Normal = rightRec.Normal
 				rec.material = rightRec.material
 			}
-			return true
+			return true, rec
 		} else if hitLeft {
 			rec.t = leftRec.t
+			rec.u = leftRec.u
+			rec.v = leftRec.v
 			rec.P = leftRec.P
 			rec.Normal = leftRec.Normal
 			rec.material = leftRec.material
-			return true
+			return true, rec
 		} else if hitRight {
 			rec.t = rightRec.t
+			rec.u = rightRec.u
+			rec.v = rightRec.v
 			rec.P = rightRec.P
 			rec.Normal = rightRec.Normal
 			rec.material = rightRec.material
-			return true
+			return true, rec
 		}
-		return false
+		return false, rec
 	}
-	return false
+	return false, HitRecord{}
 }

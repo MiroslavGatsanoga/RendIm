@@ -1,11 +1,12 @@
 package rendim
 
 type Hitable interface {
-	Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool
+	Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord)
 	BoundingBox(t0, t1 float64, box *AABB) bool
 }
 
 type HitRecord struct {
+	u, v     float64
 	t        float64
 	P        Vec3d
 	Normal   Vec3d
@@ -14,23 +15,25 @@ type HitRecord struct {
 
 type HitableList []Hitable
 
-func (hl HitableList) Hit(r Ray, tMin float64, tMax float64, rec *HitRecord) bool {
-	tempRec := &HitRecord{}
+func (hl HitableList) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord) {
 	hitAnything := false
 	closestSoFar := tMax
+	rec := HitRecord{}
 	for _, h := range hl {
-		if h.Hit(r, tMin, closestSoFar, tempRec) {
+		if isHit, hr := h.Hit(r, tMin, closestSoFar); isHit {
 			hitAnything = true
-			closestSoFar = tempRec.t
+			closestSoFar = hr.t
 
-			//rec = tempRec //todo:NOTE!!! copy tempRec to rec
-			rec.t = tempRec.t
-			rec.P = tempRec.P
-			rec.Normal = tempRec.Normal
-			rec.material = tempRec.material
+			rec.t = hr.t
+			rec.u = hr.u
+			rec.v = hr.v
+			rec.P = hr.P
+			rec.Normal = hr.Normal
+			rec.material = hr.material
 		}
 	}
-	return hitAnything
+
+	return hitAnything, rec
 }
 
 func (hl HitableList) Len() int {

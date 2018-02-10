@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	_ "image/jpeg"
 	"math"
 	"math/rand"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -27,7 +29,7 @@ type Pixel struct {
 }
 
 func Render(width, height int, pixels chan Pixel) image.Image {
-	scene := twoPerlinSpheres(width, height)
+	scene := earthScene(width, height)
 
 	return renderBuckets(width, height, scene, pixels)
 }
@@ -127,14 +129,15 @@ func renderBucket(buckets chan image.Rectangle, scene *Scene, img *image.RGBA, w
 }
 
 func rayColor(r Ray, world *HitableList, depth int) Color {
-	rec := &HitRecord{}
-	if world.Hit(r, 0.001, math.MaxFloat64, rec) {
+	if isHit, rec := world.Hit(r, 0.001, math.MaxFloat64); isHit {
 		attenuation := &Color{}
 		if depth < 50 {
-			isScattered, scattered := rec.material.Scatter(r, *rec, attenuation)
+			// isScattered, scattered := rec.material.Scatter(r, rec, attenuation)
+			isScattered, _ := rec.material.Scatter(r, rec, attenuation)
 			if isScattered {
-				clr := rayColor(scattered, world, depth+1)
-				return attenuation.Multiply(clr)
+				// clr := rayColor(scattered, world, depth+1)
+				// return attenuation.Multiply(clr)
+				return *attenuation
 			}
 		}
 
@@ -272,6 +275,42 @@ func twoPerlinSpheres(width, height int) Scene {
 	world = append(world, NewSphere(NewVec3d(0.0, 2.0, 0.0), 2, Lambertian{albedo: perlinTexture}))
 
 	lookFrom := NewVec3d(13.0, 2.0, 3.0)
+	lookAt := NewVec3d(0.0, 0.0, 0.0)
+
+	vUp := NewVec3d(0.0, 1.0, 0.0)
+	vFov := 20.0 //vertical field of view in degrees
+	aspectRatio := float64(width) / float64(height)
+
+	distToFocus := 10.0
+	aperture := 0.0
+	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus, 0.0, 1.0)
+
+	bvh := HitableList{}
+	bvh = append(bvh, NewBVHNode(world, 0.0, 1.0))
+	return Scene{camera: cam, world: bvh}
+}
+
+func earthScene(width, height int) Scene {
+	f, err := os.Open("earthmap.jpg")
+	defer f.Close()
+	if err != nil {
+		panic("cannot find earthmap.jpg")
+	}
+
+	img, _, err := image.Decode(f)
+	if err != nil {
+		panic("cannot decode earthmap.jpg")
+	}
+
+	earth := Lambertian{
+		albedo: ImageTexture{
+			image: img,
+		}}
+
+	world := HitableList{}
+	world = append(world, NewSphere(NewVec3d(0.0, 0.0, 0.0), 2, earth))
+
+	lookFrom := NewVec3d(17.0, 2.0, 3.0)
 	lookAt := NewVec3d(0.0, 0.0, 0.0)
 
 	vUp := NewVec3d(0.0, 1.0, 0.0)
