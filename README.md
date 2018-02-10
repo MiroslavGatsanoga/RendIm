@@ -1,5 +1,5 @@
 # RendIm
-A path tracer based on Peter Shirley's [Ray Tracing in One Weekend](http://www.amazon.com/gp/product/B01B5AODD8/ref=as_li_tl?ie=UTF8&camp=1789&creative=9325&creativeASIN=B01B5AODD8&linkCode=as2&tag=inonwe09-20&linkId=OPNJXXJY2IBCMEGE)
+A path tracer based on Peter Shirley's [Ray](http://www.amazon.com/gp/product/B01B5AODD8/ref=as_li_tl) [Tracing](https://www.amazon.com/gp/product/B01CO7PQ8C/ref=series_rw_dp_sw) [Minibooks](https://www.amazon.com/gp/product/B01DN58P8C/ref=series_rw_dp_sw)
 
 Image from the cover of the book:
 
