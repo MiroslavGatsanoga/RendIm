@@ -39,3 +39,19 @@ func (hl HitableList) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord) {
 func (hl HitableList) Len() int {
 	return len(hl)
 }
+
+type FlipNormals struct {
+	hitable Hitable
+}
+
+func (f FlipNormals) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord) {
+	if isHit, rec := f.hitable.Hit(r, tMin, tMax); isHit {
+		rec.Normal = rec.Normal.MultiplyScalar(-1.0)
+		return true, rec
+	}
+	return false, HitRecord{}
+}
+
+func (f FlipNormals) BoundingBox(t0, t1 float64, box *AABB) bool {
+	return f.hitable.BoundingBox(t0, t1, box)
+}

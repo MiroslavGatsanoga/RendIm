@@ -7,6 +7,7 @@ import (
 
 type Material interface {
 	Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (bool, Ray)
+	Emitted(u, v float64, p Vec3d) Color
 }
 
 type Lambertian struct {
@@ -20,6 +21,10 @@ func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isSca
 	return true, scattered
 }
 
+func (l Lambertian) Emitted(u, v float64, p Vec3d) Color {
+	return Color{0, 0, 0}
+}
+
 type Metal struct {
 	albedo Texture
 	fuzz   float64
@@ -30,6 +35,10 @@ func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattere
 	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere().MultiplyScalar(m.fuzz)), 0.0)
 	*attenuation = m.albedo.Value(0, 0, rec.P)
 	return scattered.Direction().Dot(rec.Normal) > 0, scattered
+}
+
+func (m Metal) Emitted(u, v float64, p Vec3d) Color {
+	return Color{0, 0, 0}
 }
 
 type Dielectric struct {
@@ -77,6 +86,22 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isSca
 	}
 
 	return true, scattered
+}
+
+func (d Dielectric) Emitted(u, v float64, p Vec3d) Color {
+	return Color{0, 0, 0}
+}
+
+type DiffuseLight struct {
+	emit Texture
+}
+
+func (dl DiffuseLight) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
+	return false, Ray{}
+}
+
+func (dl DiffuseLight) Emitted(u, v float64, p Vec3d) Color {
+	return dl.emit.Value(u, v, p)
 }
 
 func randomInUnitSphere() Vec3d {
