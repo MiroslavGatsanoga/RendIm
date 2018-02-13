@@ -234,6 +234,26 @@ func cornellBox(width, height int) Scene {
 	world = append(world, XZRect{x0: 0.0, x1: 555.0, z0: 0.0, z1: 555.0, k: 0.0, material: white})
 	world = append(world, FlipNormals{hitable: XYRect{x0: 0.0, x1: 555.0, y0: 0.0, y1: 555.0, k: 555.0, material: white}})
 
+	world = append(world,
+		Translate{
+			hitable: NewRotateY(
+				NewBox(
+					NewVec3d(0.0, 0.0, 0.0),
+					NewVec3d(165.0, 165.0, 165.0),
+					white),
+				-18.0),
+			offset: NewVec3d(130.0, 0.0, 65.0)})
+
+	world = append(world,
+		Translate{
+			hitable: NewRotateY(
+				NewBox(
+					NewVec3d(0.0, 0.0, 0.0),
+					NewVec3d(165.0, 330.0, 165.0),
+					white),
+				15.0),
+			offset: NewVec3d(265.0, 0.0, 295.0)})
+
 	lookFrom := NewVec3d(278.0, 278.0, -800.0)
 	lookAt := NewVec3d(278.0, 278.0, 0.0)
 
