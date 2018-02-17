@@ -224,35 +224,36 @@ func cornellBox(width, height int) Scene {
 	red := Lambertian{albedo: ConstantTexture{color: Color{R: 0.65, G: 0.05, B: 0.05}}}
 	white := Lambertian{albedo: ConstantTexture{color: Color{R: 0.73, G: 0.73, B: 0.73}}}
 	green := Lambertian{albedo: ConstantTexture{color: Color{R: 0.12, G: 0.45, B: 0.15}}}
-	light := DiffuseLight{emit: ConstantTexture{color: Color{R: 15, G: 15, B: 15}}}
+	light := DiffuseLight{emit: ConstantTexture{color: Color{R: 7, G: 7, B: 7}}}
 
 	world := HitableList{}
 	world = append(world, FlipNormals{hitable: YZRect{y0: 0.0, y1: 555.0, z0: 0.0, z1: 555.0, k: 555.0, material: green}})
 	world = append(world, YZRect{y0: 0.0, y1: 555.0, z0: 0.0, z1: 555.0, k: 0.0, material: red})
-	world = append(world, XZRect{x0: 213.0, x1: 343.0, z0: 227.0, z1: 332.0, k: 554.0, material: light})
+	world = append(world, XZRect{x0: 113.0, x1: 443.0, z0: 127.0, z1: 432.0, k: 554.0, material: light})
 	world = append(world, FlipNormals{hitable: XZRect{x0: 0.0, x1: 555.0, z0: 0.0, z1: 555.0, k: 555.0, material: white}})
 	world = append(world, XZRect{x0: 0.0, x1: 555.0, z0: 0.0, z1: 555.0, k: 0.0, material: white})
 	world = append(world, FlipNormals{hitable: XYRect{x0: 0.0, x1: 555.0, y0: 0.0, y1: 555.0, k: 555.0, material: white}})
 
-	world = append(world,
-		Translate{
-			hitable: NewRotateY(
-				NewBox(
-					NewVec3d(0.0, 0.0, 0.0),
-					NewVec3d(165.0, 165.0, 165.0),
-					white),
-				-18.0),
-			offset: NewVec3d(130.0, 0.0, 65.0)})
+	b1 := Translate{
+		hitable: NewRotateY(
+			NewBox(
+				NewVec3d(0.0, 0.0, 0.0),
+				NewVec3d(165.0, 165.0, 165.0),
+				white),
+			-18.0),
+		offset: NewVec3d(130.0, 0.0, 65.0)}
 
-	world = append(world,
-		Translate{
-			hitable: NewRotateY(
-				NewBox(
-					NewVec3d(0.0, 0.0, 0.0),
-					NewVec3d(165.0, 330.0, 165.0),
-					white),
-				15.0),
-			offset: NewVec3d(265.0, 0.0, 295.0)})
+	b2 := Translate{
+		hitable: NewRotateY(
+			NewBox(
+				NewVec3d(0.0, 0.0, 0.0),
+				NewVec3d(165.0, 330.0, 165.0),
+				white),
+			15.0),
+		offset: NewVec3d(265.0, 0.0, 295.0)}
+
+	world = append(world, ConstantMedium{boundary: b1, density: 0.01, phaseFunction: Isotropic{albedo: ConstantTexture{color: Color{R: 1.0, G: 1.0, B: 1.0}}}})
+	world = append(world, ConstantMedium{boundary: b2, density: 0.01, phaseFunction: Isotropic{albedo: ConstantTexture{color: Color{R: 0.0, G: 0.0, B: 0.0}}}})
 
 	lookFrom := NewVec3d(278.0, 278.0, -800.0)
 	lookAt := NewVec3d(278.0, 278.0, 0.0)

@@ -25,6 +25,20 @@ func (l Lambertian) Emitted(u, v float64, p Vec3d) Color {
 	return Color{0, 0, 0}
 }
 
+type Isotropic struct {
+	albedo Texture
+}
+
+func (i Isotropic) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
+	scattered = NewRay(rec.P, randomInUnitSphere(), 0.0)
+	*attenuation = i.albedo.Value(rec.u, rec.v, rec.P)
+	return true, scattered
+}
+
+func (i Isotropic) Emitted(u, v float64, p Vec3d) Color {
+	return Color{0, 0, 0}
+}
+
 type Metal struct {
 	albedo Texture
 	fuzz   float64

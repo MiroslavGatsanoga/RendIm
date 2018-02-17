@@ -28,10 +28,36 @@ func (c Color) DivideScalar(s float64) Color {
 	return Color{R: c.R / s, G: c.G / s, B: c.B / s}
 }
 
+func (c Color) Clamp() Color {
+	if c.R < 0.0 {
+		c.R = 0.0
+	}
+	if c.G < 0.0 {
+		c.G = 0.0
+	}
+	if c.B < 0.0 {
+		c.B = 0.0
+	}
+
+	if c.R > 1.0 {
+		c.R = 1.0
+	}
+	if c.G > 1.0 {
+		c.G = 1.0
+	}
+	if c.B > 1.0 {
+		c.B = 1.0
+	}
+
+	return c
+}
+
 func (c Color) ToRGBA() color.RGBA {
-	ir := uint8(255.99 * c.R)
-	ig := uint8(255.99 * c.G)
-	ib := uint8(255.99 * c.B)
+	clamped := c.Clamp()
+
+	ir := uint8(255.99 * clamped.R)
+	ig := uint8(255.99 * clamped.G)
+	ib := uint8(255.99 * clamped.B)
 
 	return color.RGBA{R: ir, G: ig, B: ib, A: 255}
 }
