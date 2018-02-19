@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	width  = 300
-	height = 200
+	width  = 800
+	height = 800
 )
 
 var upgrader = websocket.Upgrader{

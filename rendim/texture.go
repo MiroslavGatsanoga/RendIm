@@ -39,7 +39,7 @@ type NoiseTexture struct {
 func (t NoiseTexture) Value(u, v float64, p Vec3d) Color {
 	clr := Color{R: 1.0, G: 1.0, B: 1.0}
 	t.noise = perlinNoise
-	return clr.MultiplyScalar(0.5 * (1.0 + math.Sin(t.scale*p.Z()+10.0*t.noise.Turbulence(p))))
+	return clr.MultiplyScalar(0.5 * (1.0 + math.Sin(t.scale*p.X()+5.0*t.noise.Turbulence(p.MultiplyScalar(t.scale)))))
 }
 
 type perlin struct {

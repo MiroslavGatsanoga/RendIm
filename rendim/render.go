@@ -8,6 +8,7 @@ import (
 	_ "image/jpeg"
 	"math"
 	"math/rand"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	samples      = 100
+	samples      = 10000
 	bucketSize   = 32
 	workersCount = 4
 )
@@ -28,7 +29,7 @@ type Pixel struct {
 }
 
 func Render(width, height int, pixels chan Pixel) image.Image {
-	scene := cornellBox(width, height)
+	scene := finalScene(width, height)
 
 	return renderBuckets(width, height, scene, pixels)
 }
@@ -187,6 +188,7 @@ func showProgress(pixCount int, done chan bool) {
 			fmt.Printf("\r[%-50s] %d %% %v", progressBar.String(), progressPercent, elapsedDuration)
 		case <-done:
 			fmt.Printf("\r[%50s] Done                    \n", strings.Repeat("=", 50))
+			fmt.Println("Image rendered in", time.Second*time.Duration(elapsed/1000))
 			done <- true
 			return
 		}
@@ -256,6 +258,98 @@ func cornellBox(width, height int) Scene {
 	world = append(world, ConstantMedium{boundary: b2, density: 0.01, phaseFunction: Isotropic{albedo: ConstantTexture{color: Color{R: 0.0, G: 0.0, B: 0.0}}}})
 
 	lookFrom := NewVec3d(278.0, 278.0, -800.0)
+	lookAt := NewVec3d(278.0, 278.0, 0.0)
+
+	vUp := NewVec3d(0.0, 1.0, 0.0)
+	vFov := 40.0 //vertical field of view in degrees
+	aspectRatio := float64(width) / float64(height)
+
+	distToFocus := 10.0
+	aperture := 0.0
+	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspectRatio, aperture, distToFocus, 0.0, 1.0)
+
+	bvh := HitableList{}
+	bvh = append(bvh, NewBVHNode(world, 0.0, 1.0))
+	return Scene{camera: cam, world: bvh}
+}
+
+func finalScene(width, height int) Scene {
+	rnd := rand.New(rand.NewSource(3))
+	boxlist := HitableList{}
+	ground := Lambertian{albedo: ConstantTexture{color: Color{R: 0.48, G: 0.83, B: 0.53}}}
+
+	nb := 20
+	for i := 0; i < nb; i++ {
+		for j := 0; j < nb; j++ {
+			w := 100.0
+			x0 := -1000.0 + float64(i)*w
+			z0 := -1000.0 + float64(j)*w
+			y0 := 0.0
+			x1 := x0 + w
+			y1 := 100 * (rnd.Float64() + 0.01)
+			z1 := z0 + w
+			boxlist = append(boxlist, NewBox(
+				NewVec3d(x0, y0, z0),
+				NewVec3d(x1, y1, z1),
+				ground))
+
+		}
+	}
+
+	world := HitableList{}
+	world = append(world, NewBVHNode(boxlist, 0.0, 1.0))
+
+	light := DiffuseLight{emit: ConstantTexture{color: Color{R: 7, G: 7, B: 7}}}
+	world = append(world, XZRect{x0: 123.0, x1: 423.0, z0: 147.0, z1: 412.0, k: 554.0, material: light})
+
+	center := NewVec3d(400.0, 400.0, 200.0)
+	world = append(world, NewMovingSphere(center, center.Add(NewVec3d(30.0, 0.0, 0.0)), 0.0, 1.0, 50.0, Lambertian{albedo: ConstantTexture{color: Color{R: 0.7, G: 0.3, B: 0.1}}}))
+	world = append(world, NewSphere(NewVec3d(260.0, 150.0, 45.0), 50.0, Dielectric{refIdx: 1.5}))
+	world = append(world, NewSphere(NewVec3d(0.0, 150.0, 145.0), 50.0, Metal{albedo: ConstantTexture{color: Color{R: 0.8, G: 0.8, B: 0.9}}, fuzz: 1.0}))
+
+	bnd := NewSphere(NewVec3d(360.0, 150.0, 145.0), 70.0, Dielectric{refIdx: 1.5})
+	world = append(world, bnd)
+	world = append(world, ConstantMedium{boundary: bnd, density: 0.2, phaseFunction: Isotropic{albedo: ConstantTexture{color: Color{R: 0.2, G: 0.4, B: 0.9}}}})
+	bnd2 := NewSphere(NewVec3d(0.0, 0.0, 0.0), 5000.0, Dielectric{refIdx: 1.5})
+	world = append(world, ConstantMedium{boundary: bnd2, density: 0.0001, phaseFunction: Isotropic{albedo: ConstantTexture{color: Color{R: 1.0, G: 1.0, B: 1.0}}}})
+
+	f, err := os.Open("earthmap.jpg")
+	defer f.Close()
+	if err != nil {
+		panic("cannot find earthmap.jpg")
+	}
+
+	img, _, err := image.Decode(f)
+	if err != nil {
+		panic("cannot decode earthmap.jpg")
+	}
+
+	earth := Lambertian{
+		albedo: ImageTexture{
+			image: img,
+		}}
+
+	world = append(world, NewSphere(NewVec3d(400.0, 200.0, 400.0), 100.0, earth))
+
+	perlinTexture := NoiseTexture{scale: 0.1}
+	world = append(world, NewSphere(NewVec3d(220.0, 280.0, 300.0), 80.0, Lambertian{albedo: perlinTexture}))
+
+	ns := 1000
+	sphereList := HitableList{}
+	white := Lambertian{albedo: ConstantTexture{color: Color{R: 0.73, G: 0.73, B: 0.73}}}
+	for j := 0; j < ns; j++ {
+		sphereList = append(sphereList, NewSphere(NewVec3d(165.0*rnd.Float64(), 165.0*rnd.Float64(), 165.0*rnd.Float64()), 10.0, white))
+	}
+
+	sphereBox := Translate{
+		hitable: NewRotateY(
+			NewBVHNode(sphereList, 0.0, 1.0),
+			15.0),
+		offset: NewVec3d(-100.0, 270.0, 395.0)}
+
+	world = append(world, sphereBox)
+
+	lookFrom := NewVec3d(478.0, 278.0, -600.0)
 	lookAt := NewVec3d(278.0, 278.0, 0.0)
 
 	vUp := NewVec3d(0.0, 1.0, 0.0)
