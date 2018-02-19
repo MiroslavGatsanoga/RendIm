@@ -9,6 +9,6 @@ Rendering the image with 100 samples per pixel took **49m 4s** on machine with I
 
 Image from the cover of the second book:
 
-![alt text](https://github.com/MiroslavGatsanoga/RendIm/blob/master/out.png)
+![alt text](https://github.com/MiroslavGatsanoga/RendIm/blob/master/out2.png)
 
 Rendering the image with 10000 samples per pixel took **36h 43m 16s** on machine with Intel Core i5-4210H CPU 2.90 GHz.
