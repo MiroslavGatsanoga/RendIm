@@ -29,7 +29,7 @@ func (cm ConstantMedium) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord
 
 			rec := HitRecord{}
 			distanceInsideBoundary := (rec2.t - rec1.t) * r.Direction().Length()
-			hitDistance := -(1.0 / cm.density) * math.Log(rand.Float64())
+			hitDistance := -(1.0 / cm.density) * math.Log(rand.Float64()) //nolint:gosec // G404: math/rand for volumetric scattering
 			if hitDistance < distanceInsideBoundary {
 				rec.t = rec1.t + hitDistance/r.Direction().Length()
 				rec.P = r.PointAt(rec.t)

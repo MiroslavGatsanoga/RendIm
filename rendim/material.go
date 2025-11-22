@@ -92,7 +92,7 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isSca
 		reflectProb = 1.0
 	}
 
-	if rand.Float64() < reflectProb {
+	if rand.Float64() < reflectProb { //nolint:gosec // G404: math/rand for reflection sampling
 		reflected := reflect(rayIn.Direction(), rec.Normal)
 		scattered = NewRay(rec.P, reflected, 0.0)
 	} else {
@@ -119,9 +119,9 @@ func (dl DiffuseLight) Emitted(u, v float64, p Vec3d) Color {
 }
 
 func randomInUnitSphere() Vec3d {
-	p := NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+	p := NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0)) //nolint:gosec // G404: math/rand for sampling
 	for p.Dot(p) >= 1.0 {
-		p = NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
+		p = NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0)) //nolint:gosec // G404: math/rand for sampling
 	}
 	return p
 }
@@ -131,7 +131,7 @@ func reflect(v, n Vec3d) Vec3d {
 	return v.Subtract(tmp)
 }
 
-func refract(v, n Vec3d, NiOverNt float64) (isRefracted bool, refracted Vec3d) {
+func refract(v, n Vec3d, NiOverNt float64) (isRefracted bool, refracted Vec3d) { //nolint:gocritic // captLocal: follows physics notation η_i/η_t
 	uv := v.UnitVector()
 	dt := uv.Dot(n)
 	discriminant := 1.0 - NiOverNt*NiOverNt*(1.0-dt*dt)
@@ -149,6 +149,6 @@ func refract(v, n Vec3d, NiOverNt float64) (isRefracted bool, refracted Vec3d) {
 
 func schlick(cosine, refIdx float64) float64 {
 	r0 := (1.0 - refIdx) / (1.0 + refIdx)
-	r0 = r0 * r0
+	r0 *= r0
 	return r0 + (1.0-r0)*math.Pow((1.0-cosine), 5.0)
 }

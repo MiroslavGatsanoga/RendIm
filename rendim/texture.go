@@ -111,9 +111,9 @@ func perlinGenerate() []Vec3d {
 	p := make([]Vec3d, 256)
 	for i := range p {
 		p[i] = NewVec3d(
-			-1.0+2.0*rand.Float64(),
-			-1.0+2.0*rand.Float64(),
-			-1.0+2.0*rand.Float64(),
+			-1.0+2.0*rand.Float64(), //nolint:gosec // G404: math/rand for Perlin noise generation
+			-1.0+2.0*rand.Float64(), //nolint:gosec // G404: math/rand for Perlin noise generation
+			-1.0+2.0*rand.Float64(), //nolint:gosec // G404: math/rand for Perlin noise generation
 		)
 	}
 	return p
@@ -122,7 +122,7 @@ func perlinGenerate() []Vec3d {
 func permute(p []int) {
 	n := len(p)
 	for i := n - 1; i > 0; i-- {
-		target := int(rand.Float64() * float64(i+1))
+		target := int(rand.Float64() * float64(i+1)) //nolint:gosec // G404: math/rand for permutation
 		p[i], p[target] = p[target], p[i]
 	}
 }

@@ -74,7 +74,7 @@ func (t Translate) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord) {
 
 func (t Translate) BoundingBox(t0, t1 float64, box *AABB) bool {
 	if t.hitable.BoundingBox(t0, t1, box) {
-		*box = AABB{Min: (*box).Min.Add(t.offset), Max: (*box).Max.Add(t.offset)}
+		*box = AABB{Min: box.Min.Add(t.offset), Max: box.Max.Add(t.offset)}
 		return true
 	}
 	return false
