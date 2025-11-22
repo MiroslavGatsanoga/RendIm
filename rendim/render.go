@@ -15,12 +15,6 @@ import (
 	"time"
 )
 
-const (
-	samples      = 10000
-	bucketSize   = 32
-	workersCount = 4
-)
-
 var ops uint64
 
 type Pixel struct {
@@ -30,24 +24,37 @@ type Pixel struct {
 
 func Render(width, height int, pixels chan Pixel) image.Image {
 	scene := finalScene(width, height)
-
-	return renderBuckets(width, height, scene, pixels)
+	return renderBuckets(width, height, scene, 10000, 32, 4, pixels)
 }
 
-func renderBuckets(width, height int, scene Scene, pixels chan Pixel) image.Image {
+func RenderScene(width, height int, sceneType string, samples, bucketSize, workersCount int, pixels chan Pixel) image.Image {
+	var scene Scene
+	switch sceneType {
+	case "simpleLight":
+		scene = SimpleLightScene(width, height)
+	case "cornell":
+		scene = CornellBox(width, height)
+	default:
+		scene = finalScene(width, height)
+	}
+
+	return renderBuckets(width, height, scene, samples, bucketSize, workersCount, pixels)
+}
+
+func renderBuckets(width, height int, scene Scene, samples, bucketSize, workersCount int, pixels chan Pixel) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
-	buckets := getBuckets(img.Bounds())
+	buckets := getBuckets(img.Bounds(), bucketSize)
 	bucketChan := make(chan image.Rectangle, len(buckets))
 
 	done := make(chan bool)
-	go showProgress(width*height, done)
+	go showProgress(width*height, samples, done)
 
 	var wg sync.WaitGroup
 	wg.Add(workersCount)
 
 	for w := 0; w < workersCount; w++ {
-		go renderBucket(bucketChan, &scene, img, &wg, pixels)
+		go renderBucket(bucketChan, &scene, img, samples, &wg, pixels)
 	}
 
 	for _, b := range buckets {
@@ -63,7 +70,7 @@ func renderBuckets(width, height int, scene Scene, pixels chan Pixel) image.Imag
 	return img
 }
 
-func getBuckets(r image.Rectangle) []image.Rectangle {
+func getBuckets(r image.Rectangle, bucketSize int) []image.Rectangle {
 	w := r.Bounds().Dx()
 	h := r.Bounds().Dy()
 
@@ -106,7 +113,7 @@ func clip(r *image.Rectangle, maxX, maxY int) {
 	r.Max.Y = int(math.Min(float64(r.Max.Y), float64(maxY)))
 }
 
-func renderBucket(buckets chan image.Rectangle, scene *Scene, img *image.RGBA, wg *sync.WaitGroup, pixels chan Pixel) {
+func renderBucket(buckets chan image.Rectangle, scene *Scene, img *image.RGBA, samples int, wg *sync.WaitGroup, pixels chan Pixel) {
 	defer wg.Done()
 
 	width := img.Bounds().Max.X
@@ -115,7 +122,7 @@ func renderBucket(buckets chan image.Rectangle, scene *Scene, img *image.RGBA, w
 	for b := range buckets {
 		for py := b.Min.Y; py <= b.Max.Y; py++ {
 			for px := b.Min.X; px <= b.Max.X; px++ {
-				clr := pixelColor(px, py, width, height, scene)
+				clr := pixelColor(px, py, width, height, samples, scene)
 				img.Set(px, py, clr)
 				pixels <- Pixel{
 					image.Point{X: px, Y: py},
@@ -148,26 +155,26 @@ func rayColor(r Ray, world *HitableList, depth int) Color {
 	return Color{}
 }
 
-func pixelColor(px, py, width, height int, scene *Scene) color.RGBA {
+func pixelColor(px, py, width, height, samples int, scene *Scene) color.RGBA {
 	var rayClr Color
 	for s := 0; s < samples; s++ {
-		u := (float64(px) + rand.Float64()) / float64(width)
-		v := (float64(height-py) + rand.Float64()) / float64(height)
+		u := (float64(px) + rand.Float64()) / float64(width)         //nolint:gosec // G404: math/rand for anti-aliasing
+		v := (float64(height-py) + rand.Float64()) / float64(height) //nolint:gosec // G404: math/rand for anti-aliasing
 		r := scene.camera.GetRay(u, v)
 		rayClr = rayClr.Add(rayColor(r, &scene.world, 0))
 	}
-	rayClr = rayClr.DivideScalar(samples)
+	rayClr = rayClr.DivideScalar(float64(samples))
 	rayClrGamma := Color{
 		R: math.Sqrt(rayClr.R),
 		G: math.Sqrt(rayClr.G),
 		B: math.Sqrt(rayClr.B)}
 
-	atomic.AddUint64(&ops, samples)
+	atomic.AddUint64(&ops, uint64(samples)) //nolint:gosec // G115: samples is user-controlled but bounded
 
 	return rayClrGamma.ToRGBA()
 }
 
-func showProgress(pixCount int, done chan bool) {
+func showProgress(pixCount, samples int, done chan bool) {
 	const tickIntervalMs = 1000
 	ticker := time.NewTicker(time.Millisecond * tickIntervalMs)
 	elapsed := 0
@@ -195,7 +202,7 @@ func showProgress(pixCount int, done chan bool) {
 	}
 }
 
-func simpleLightScene(width, height int) Scene {
+func SimpleLightScene(width, height int) Scene {
 	perlinTexture := NoiseTexture{scale: 4.0}
 
 	world := HitableList{}
@@ -210,7 +217,7 @@ func simpleLightScene(width, height int) Scene {
 	lookAt := NewVec3d(0.0, 2.0, 0.0)
 
 	vUp := NewVec3d(0.0, 1.0, 0.0)
-	vFov := 30.0 //vertical field of view in degrees
+	vFov := 30.0 // vertical field of view in degrees
 	aspectRatio := float64(width) / float64(height)
 
 	distToFocus := 10.0
@@ -222,7 +229,7 @@ func simpleLightScene(width, height int) Scene {
 	return Scene{camera: cam, world: bvh}
 }
 
-func cornellBox(width, height int) Scene {
+func CornellBox(width, height int) Scene {
 	red := Lambertian{albedo: ConstantTexture{color: Color{R: 0.65, G: 0.05, B: 0.05}}}
 	white := Lambertian{albedo: ConstantTexture{color: Color{R: 0.73, G: 0.73, B: 0.73}}}
 	green := Lambertian{albedo: ConstantTexture{color: Color{R: 0.12, G: 0.45, B: 0.15}}}
@@ -261,7 +268,7 @@ func cornellBox(width, height int) Scene {
 	lookAt := NewVec3d(278.0, 278.0, 0.0)
 
 	vUp := NewVec3d(0.0, 1.0, 0.0)
-	vFov := 40.0 //vertical field of view in degrees
+	vFov := 40.0 // vertical field of view in degrees
 	aspectRatio := float64(width) / float64(height)
 
 	distToFocus := 10.0
@@ -274,7 +281,7 @@ func cornellBox(width, height int) Scene {
 }
 
 func finalScene(width, height int) Scene {
-	rnd := rand.New(rand.NewSource(3))
+	rnd := rand.New(rand.NewSource(3)) //nolint:gosec // G404: math/rand for scene generation
 	boxlist := HitableList{}
 	ground := Lambertian{albedo: ConstantTexture{color: Color{R: 0.48, G: 0.83, B: 0.53}}}
 
@@ -292,7 +299,6 @@ func finalScene(width, height int) Scene {
 				NewVec3d(x0, y0, z0),
 				NewVec3d(x1, y1, z1),
 				ground))
-
 		}
 	}
 
@@ -314,10 +320,10 @@ func finalScene(width, height int) Scene {
 	world = append(world, ConstantMedium{boundary: bnd2, density: 0.0001, phaseFunction: Isotropic{albedo: ConstantTexture{color: Color{R: 1.0, G: 1.0, B: 1.0}}}})
 
 	f, err := os.Open("earthmap.jpg")
-	defer f.Close()
 	if err != nil {
 		panic("cannot find earthmap.jpg")
 	}
+	defer f.Close()
 
 	img, _, err := image.Decode(f)
 	if err != nil {
@@ -353,7 +359,7 @@ func finalScene(width, height int) Scene {
 	lookAt := NewVec3d(278.0, 278.0, 0.0)
 
 	vUp := NewVec3d(0.0, 1.0, 0.0)
-	vFov := 40.0 //vertical field of view in degrees
+	vFov := 40.0 // vertical field of view in degrees
 	aspectRatio := float64(width) / float64(height)
 
 	distToFocus := 10.0
