@@ -6,17 +6,47 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
 <body>
-<button class="btn btn-primary" onclick="openWebsocket()">Start render</button>
-<span id="status"></span>
+<div style="margin: 20px;">
+    <div style="margin-bottom: 15px;">
+        <label for="scene-select">Scene:</label>
+        <select id="scene-select" class="form-control" style="width: 200px; display: inline-block; margin-left: 10px;">
+            <option value="final">Final Scene</option>
+            <option value="simpleLight">Simple Light</option>
+            <option value="cornell">Cornell Box</option>
+        </select>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+        <label for="samples">Samples:</label>
+        <input id="samples" type="number" class="form-control" value="10000" min="1" max="100000" style="width: 150px; display: inline-block; margin-left: 10px;">
+        
+        <label for="bucket-size" style="margin-left: 20px;">Bucket Size:</label>
+        <input id="bucket-size" type="number" class="form-control" value="32" min="8" max="128" style="width: 150px; display: inline-block; margin-left: 10px;">
+        
+        <label for="workers" style="margin-left: 20px;">Workers:</label>
+        <input id="workers" type="number" class="form-control" value="4" min="1" max="16" style="width: 150px; display: inline-block; margin-left: 10px;">
+    </div>
+    
+    <button class="btn btn-primary" onclick="openWebsocket()">Start render</button>
+    <span id="status" style="margin-left: 10px;"></span>
+</div>
 <div id="render-result" class="hidden">
     <canvas id="canvas" width="800" height="800" style="border:1px solid #8d8282; background:#000000"></canvas>
 </div>
  
 <script type="text/javascript">
     function openWebsocket() {
-          var ws = new WebSocket("ws://localhost:3000/websocket");
+          var scene = $("#scene-select").val();
+          var samples = $("#samples").val();
+          var bucketSize = $("#bucket-size").val();
+          var workers = $("#workers").val();
+          
+          var ws = new WebSocket("ws://localhost:3000/websocket?scene=" + scene + 
+                                 "&samples=" + samples + 
+                                 "&bucketSize=" + bucketSize + 
+                                 "&workers=" + workers);
  
-            $("#status").html("Rendering...");
+            $("#status").html("Rendering " + scene + " (samples: " + samples + ", workers: " + workers + ")...");
             $("#render-result").removeClass("hidden");
 
           ws.onmessage = function (evt)
