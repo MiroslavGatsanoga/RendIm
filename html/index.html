@@ -51,13 +51,19 @@
 
           ws.onmessage = function (evt)
           {
-              var pixelData = JSON.parse(evt.data)
-            setPixel(pixelData)
+              var pixelDataArray = JSON.parse(evt.data)
+              if (Array.isArray(pixelDataArray)) {
+                  for (var i = 0; i < pixelDataArray.length; i++) {
+                      setPixel(pixelDataArray[i]);
+                  }
+              } else {
+                  setPixel(pixelDataArray);
+              }
           };
- 
+          
           ws.onclose = function()
           {
-              $("#status").html("Connection closed.");
+              $("#status").html("Render complete.");
           };
  
     }

@@ -61,23 +61,58 @@ func main() {
 		fmt.Printf("Client initiated a render (scene: %s, samples: %d, bucketSize: %d, workers: %d)...\n",
 			sceneType, samples, bucketSize, workers)
 
-		pixels := make(chan rendim.Pixel, width*height)
-		go rendim.RenderScene(width, height, sceneType, samples, bucketSize, workers, pixels)
+		pixels := make(chan rendim.Pixel)
+
+		go func() {
+			rendim.RenderScene(width, height, sceneType, samples, bucketSize, workers, pixels)
+			close(pixels)
+		}()
+
+		batch := make([]rendim.Pixel, 0, 1000)
+		ticker := time.NewTicker(50 * time.Millisecond)
+		defer ticker.Stop()
+
+		sendBatch := func() error {
+			if len(batch) == 0 {
+				return nil
+			}
+			data, err := json.Marshal(batch)
+			if err != nil {
+				return err
+			}
+			err = conn.WriteMessage(websocket.TextMessage, data)
+			if err != nil {
+				return err
+			}
+			batch = make([]rendim.Pixel, 0, 1000)
+			return nil
+		}
 
 		for {
-			time.Sleep(2 * time.Second)
-
-			for p := range pixels {
-				data, err := json.Marshal(p)
-				if err != nil {
-					fmt.Println(err)
+			select {
+			case p, ok := <-pixels:
+				if !ok {
+					if err := sendBatch(); err != nil {
+						fmt.Println(err)
+					}
+					fmt.Println("Render complete, closing connection.")
+					time.Sleep(100 * time.Millisecond)
+					if err := conn.Close(); err != nil {
+						fmt.Println(err)
+					}
 					return
 				}
-
-				err = conn.WriteMessage(websocket.TextMessage, data)
-				if err != nil {
+				batch = append(batch, p)
+				if len(batch) >= 1000 {
+					if err := sendBatch(); err != nil {
+						fmt.Println(err)
+						return
+					}
+				}
+			case <-ticker.C:
+				if err := sendBatch(); err != nil {
 					fmt.Println(err)
-					break
+					return
 				}
 			}
 		}
