@@ -13,6 +13,7 @@ func TestConstantMediumHit(t *testing.T) {
 		boundary:      boundary,
 		density:       0.01,
 		phaseFunction: phaseFunction,
+		rng:           NewRNG(0),
 	}
 	
 	ray := NewRay(NewVec3d(-5.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
@@ -43,6 +44,7 @@ func TestConstantMediumNoHit(t *testing.T) {
 		boundary:      boundary,
 		density:       0.01,
 		phaseFunction: phaseFunction,
+		rng:           NewRNG(0),
 	}
 	
 	ray := NewRay(NewVec3d(5.0, 5.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
@@ -88,6 +90,7 @@ func TestConstantMediumHitWithinBounds(t *testing.T) {
 		boundary:      boundary,
 		density:       10.0,
 		phaseFunction: phaseFunction,
+		rng:           NewRNG(0),
 	}
 	
 	ray := NewRay(NewVec3d(-5.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)

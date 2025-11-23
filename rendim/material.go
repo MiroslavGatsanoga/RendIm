@@ -2,11 +2,10 @@ package rendim
 
 import (
 	"math"
-	"math/rand"
 )
 
 type Material interface {
-	Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (bool, Ray)
+	Scatter(rayIn Ray, rec HitRecord, attenuation *Color, rng *RNG) (bool, Ray)
 	Emitted(u, v float64, p Vec3d) Color
 }
 
@@ -14,8 +13,8 @@ type Lambertian struct {
 	albedo Texture
 }
 
-func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
-	target := rec.P.Add(rec.Normal).Add(randomInUnitSphere())
+func (l Lambertian) Scatter(rayIn Ray, rec HitRecord, attenuation *Color, rng *RNG) (isScattered bool, scattered Ray) {
+	target := rec.P.Add(rec.Normal).Add(randomInUnitSphere(rng))
 	scattered = NewRay(rec.P, target.Subtract(rec.P), 0.0)
 	*attenuation = l.albedo.Value(rec.u, rec.v, rec.P)
 	return true, scattered
@@ -29,8 +28,8 @@ type Isotropic struct {
 	albedo Texture
 }
 
-func (i Isotropic) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
-	scattered = NewRay(rec.P, randomInUnitSphere(), 0.0)
+func (i Isotropic) Scatter(rayIn Ray, rec HitRecord, attenuation *Color, rng *RNG) (isScattered bool, scattered Ray) {
+	scattered = NewRay(rec.P, randomInUnitSphere(rng), 0.0)
 	*attenuation = i.albedo.Value(rec.u, rec.v, rec.P)
 	return true, scattered
 }
@@ -44,9 +43,9 @@ type Metal struct {
 	fuzz   float64
 }
 
-func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
+func (m Metal) Scatter(rayIn Ray, rec HitRecord, attenuation *Color, rng *RNG) (isScattered bool, scattered Ray) {
 	reflected := reflect(rayIn.Direction().UnitVector(), rec.Normal)
-	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere().MultiplyScalar(m.fuzz)), 0.0)
+	scattered = NewRay(rec.P, reflected.Add(randomInUnitSphere(rng).MultiplyScalar(m.fuzz)), 0.0)
 	*attenuation = m.albedo.Value(0, 0, rec.P)
 	return scattered.Direction().Dot(rec.Normal) > 0, scattered
 }
@@ -59,7 +58,7 @@ type Dielectric struct {
 	refIdx float64
 }
 
-func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
+func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color, rng *RNG) (isScattered bool, scattered Ray) {
 	*attenuation = Color{R: 1.0, G: 1.0, B: 1.0}
 	var (
 		outwardNormal Vec3d
@@ -92,7 +91,7 @@ func (d Dielectric) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isSca
 		reflectProb = 1.0
 	}
 
-	if rand.Float64() < reflectProb { //nolint:gosec // G404: math/rand for reflection sampling
+	if rng.Float64() < reflectProb {
 		reflected := reflect(rayIn.Direction(), rec.Normal)
 		scattered = NewRay(rec.P, reflected, 0.0)
 	} else {
@@ -110,7 +109,7 @@ type DiffuseLight struct {
 	emit Texture
 }
 
-func (dl DiffuseLight) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (isScattered bool, scattered Ray) {
+func (dl DiffuseLight) Scatter(rayIn Ray, rec HitRecord, attenuation *Color, rng *RNG) (isScattered bool, scattered Ray) {
 	return false, Ray{}
 }
 
@@ -118,10 +117,10 @@ func (dl DiffuseLight) Emitted(u, v float64, p Vec3d) Color {
 	return dl.emit.Value(u, v, p)
 }
 
-func randomInUnitSphere() Vec3d {
-	p := NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0)) //nolint:gosec // G404: math/rand for sampling
+func randomInUnitSphere(rng *RNG) Vec3d {
+	p := NewVec3d(rng.Float64(), rng.Float64(), rng.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
 	for p.Dot(p) >= 1.0 {
-		p = NewVec3d(rand.Float64(), rand.Float64(), rand.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0)) //nolint:gosec // G404: math/rand for sampling
+		p = NewVec3d(rng.Float64(), rng.Float64(), rng.Float64()).MultiplyScalar(2.0).Subtract(NewVec3d(1.0, 1.0, 1.0))
 	}
 	return p
 }

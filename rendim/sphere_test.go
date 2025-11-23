@@ -7,7 +7,7 @@ import (
 
 type mockMaterial struct{}
 
-func (m mockMaterial) Scatter(rayIn Ray, rec HitRecord, attenuation *Color) (bool, Ray) {
+func (m mockMaterial) Scatter(rayIn Ray, rec HitRecord, attenuation *Color, rng *RNG) (bool, Ray) {
 	return false, Ray{}
 }
 

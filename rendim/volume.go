@@ -2,13 +2,13 @@ package rendim
 
 import (
 	"math"
-	"math/rand"
 )
 
 type ConstantMedium struct {
 	boundary      Hitable
 	density       float64
 	phaseFunction Material
+	rng           *RNG
 }
 
 func (cm ConstantMedium) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord) {
@@ -29,7 +29,7 @@ func (cm ConstantMedium) Hit(r Ray, tMin float64, tMax float64) (bool, HitRecord
 
 			rec := HitRecord{}
 			distanceInsideBoundary := (rec2.t - rec1.t) * r.Direction().Length()
-			hitDistance := -(1.0 / cm.density) * math.Log(rand.Float64()) //nolint:gosec // G404: math/rand for volumetric scattering
+			hitDistance := -(1.0 / cm.density) * math.Log(cm.rng.Float64())
 			if hitDistance < distanceInsideBoundary {
 				rec.t = rec1.t + hitDistance/r.Direction().Length()
 				rec.P = r.PointAt(rec.t)

@@ -40,8 +40,9 @@ func TestCameraGetRay(t *testing.T) {
 	focusDist := 1.0
 	
 	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspect, aperture, focusDist, 0.0, 1.0)
+	rng := NewRNG(0)
 	
-	ray := cam.GetRay(0.5, 0.5)
+	ray := cam.GetRay(0.5, 0.5, rng)
 	
 	if ray.Origin().X() != 0.0 || ray.Origin().Y() != 0.0 || ray.Origin().Z() != 0.0 {
 		t.Errorf("Ray origin should be at camera position")
@@ -66,8 +67,9 @@ func TestCameraGetRayWithAperture(t *testing.T) {
 	focusDist := 1.0
 	
 	cam := NewCamera(lookFrom, lookAt, vUp, vFov, aspect, aperture, focusDist, 0.0, 1.0)
+	rng := NewRNG(0)
 	
-	ray := cam.GetRay(0.5, 0.5)
+	ray := cam.GetRay(0.5, 0.5, rng)
 	
 	if ray.Time() < 0.0 || ray.Time() > 1.0 {
 		t.Errorf("Ray time = %f, should be between 0.0 and 1.0", ray.Time())
@@ -75,8 +77,9 @@ func TestCameraGetRayWithAperture(t *testing.T) {
 }
 
 func TestRandomInUnitDisk(t *testing.T) {
+	rng := NewRNG(0)
 	for i := 0; i < 100; i++ {
-		p := randomInUnitDisk()
+		p := randomInUnitDisk(rng)
 		
 		if p.Z() != 0.0 {
 			t.Errorf("randomInUnitDisk Z component = %f, want 0.0", p.Z())

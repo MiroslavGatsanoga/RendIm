@@ -1,19 +1,19 @@
 package rendim
 
 import (
-	"math/rand"
 	"sort"
 )
 
 type BVHNode struct {
 	left, right *Hitable
 	box         AABB
+	rng         *RNG
 }
 
-func NewBVHNode(l HitableList, time0, time1 float64) Hitable {
-	bvh := BVHNode{}
+func NewBVHNode(l HitableList, time0, time1 float64, rng *RNG) Hitable {
+	bvh := BVHNode{rng: rng}
 
-	axis := rand.Intn(3) //nolint:gosec // G404: math/rand appropriate for Monte Carlo sampling in graphics
+	axis := rng.Intn(3)
 
 	if axis == 0 { //nolint:gocritic,staticcheck // ifElseChain/QF1003: if-else more readable than switch for sort logic
 		// sort by x
@@ -59,9 +59,9 @@ func NewBVHNode(l HitableList, time0, time1 float64) Hitable {
 		bvh.left = &l[0]
 		bvh.right = &l[1]
 	} else {
-		newLeft := NewBVHNode(l[:n/2], time0, time1)
+		newLeft := NewBVHNode(l[:n/2], time0, time1, rng)
 		bvh.left = &newLeft
-		newRight := NewBVHNode(l[n/2:], time0, time1)
+		newRight := NewBVHNode(l[n/2:], time0, time1, rng)
 		bvh.right = &newRight
 	}
 

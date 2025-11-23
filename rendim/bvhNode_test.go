@@ -9,7 +9,7 @@ func TestNewBVHNodeSingle(t *testing.T) {
 	sphere := NewSphere(NewVec3d(0.0, 0.0, 0.0), 1.0, mat)
 	
 	list := HitableList{sphere}
-	bvh := NewBVHNode(list, 0.0, 1.0)
+	bvh := NewBVHNode(list, 0.0, 1.0, NewRNG(0))
 	
 	var box AABB
 	hasBox := bvh.BoundingBox(0.0, 1.0, &box)
@@ -25,7 +25,7 @@ func TestNewBVHNodeDouble(t *testing.T) {
 	sphere2 := NewSphere(NewVec3d(5.0, 0.0, 0.0), 1.0, mat)
 	
 	list := HitableList{sphere1, sphere2}
-	bvh := NewBVHNode(list, 0.0, 1.0)
+	bvh := NewBVHNode(list, 0.0, 1.0, NewRNG(0))
 	
 	var box AABB
 	hasBox := bvh.BoundingBox(0.0, 1.0, &box)
@@ -52,7 +52,7 @@ func TestNewBVHNodeMultiple(t *testing.T) {
 		list = append(list, sphere)
 	}
 	
-	bvh := NewBVHNode(list, 0.0, 1.0)
+	bvh := NewBVHNode(list, 0.0, 1.0, NewRNG(0))
 	
 	var box AABB
 	hasBox := bvh.BoundingBox(0.0, 1.0, &box)
@@ -68,7 +68,7 @@ func TestBVHNodeHit(t *testing.T) {
 	sphere2 := NewSphere(NewVec3d(5.0, 0.0, 0.0), 1.0, mat)
 	
 	list := HitableList{sphere1, sphere2}
-	bvh := NewBVHNode(list, 0.0, 1.0)
+	bvh := NewBVHNode(list, 0.0, 1.0, NewRNG(0))
 	
 	tests := []struct {
 		name      string
@@ -108,7 +108,7 @@ func TestBVHNodeHitClosest(t *testing.T) {
 	sphere2 := NewSphere(NewVec3d(10.0, 0.0, 0.0), 1.0, mat)
 	
 	list := HitableList{sphere1, sphere2}
-	bvh := NewBVHNode(list, 0.0, 1.0)
+	bvh := NewBVHNode(list, 0.0, 1.0, NewRNG(0))
 	
 	ray := NewRay(NewVec3d(-5.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
 	hit, rec := bvh.Hit(ray, 0.0, 100.0)
@@ -128,7 +128,7 @@ func TestBVHNodeBoundingBox(t *testing.T) {
 	sphere2 := NewSphere(NewVec3d(5.0, 5.0, 5.0), 1.0, mat)
 	
 	list := HitableList{sphere1, sphere2}
-	bvh := NewBVHNode(list, 0.0, 1.0)
+	bvh := NewBVHNode(list, 0.0, 1.0, NewRNG(0))
 	
 	var box AABB
 	hasBox := bvh.BoundingBox(0.0, 1.0, &box)
@@ -152,7 +152,7 @@ func TestBVHNodeHitBothChildren(t *testing.T) {
 	sphere2 := NewSphere(NewVec3d(1.0, 0.0, 0.0), 2.0, mat)
 	
 	list := HitableList{sphere1, sphere2}
-	bvh := NewBVHNode(list, 0.0, 1.0)
+	bvh := NewBVHNode(list, 0.0, 1.0, NewRNG(0))
 	
 	ray := NewRay(NewVec3d(-5.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
 	hit, _ := bvh.Hit(ray, 0.0, 100.0)

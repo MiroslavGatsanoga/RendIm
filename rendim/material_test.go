@@ -16,6 +16,7 @@ func (ct constantTexture) Value(u, v float64, p Vec3d) Color {
 func TestLambertianScatter(t *testing.T) {
 	albedo := constantTexture{color: Color{R: 0.5, G: 0.5, B: 0.5}}
 	mat := Lambertian{albedo: albedo}
+	rng := NewRNG(0)
 	
 	rayIn := NewRay(NewVec3d(-1.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
 	rec := HitRecord{
@@ -25,7 +26,7 @@ func TestLambertianScatter(t *testing.T) {
 	}
 	
 	var attenuation Color
-	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation)
+	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation, rng)
 	
 	if !isScattered {
 		t.Error("Lambertian should always scatter")
@@ -51,6 +52,7 @@ func TestLambertianEmitted(t *testing.T) {
 func TestIsotropicScatter(t *testing.T) {
 	albedo := constantTexture{color: Color{R: 0.8, G: 0.7, B: 0.6}}
 	mat := Isotropic{albedo: albedo}
+	rng := NewRNG(0)
 	
 	rayIn := NewRay(NewVec3d(-1.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
 	rec := HitRecord{
@@ -60,7 +62,7 @@ func TestIsotropicScatter(t *testing.T) {
 	}
 	
 	var attenuation Color
-	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation)
+	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation, rng)
 	
 	if !isScattered {
 		t.Error("Isotropic should always scatter")
@@ -75,6 +77,7 @@ func TestIsotropicScatter(t *testing.T) {
 func TestMetalScatter(t *testing.T) {
 	albedo := constantTexture{color: Color{R: 0.9, G: 0.9, B: 0.9}}
 	mat := Metal{albedo: albedo, fuzz: 0.0}
+	rng := NewRNG(0)
 	
 	rayIn := NewRay(NewVec3d(0.0, 0.0, 0.0), NewVec3d(1.0, -1.0, 0.0).UnitVector(), 0.0)
 	rec := HitRecord{
@@ -84,7 +87,7 @@ func TestMetalScatter(t *testing.T) {
 	}
 	
 	var attenuation Color
-	isScattered, scattered := mat.Scatter(rayIn, rec, &attenuation)
+	isScattered, scattered := mat.Scatter(rayIn, rec, &attenuation, rng)
 	
 	if attenuation.R != 0.9 || attenuation.G != 0.9 || attenuation.B != 0.9 {
 		t.Errorf("Attenuation = (%f, %f, %f), want (0.9, 0.9, 0.9)",
@@ -114,6 +117,7 @@ func TestMetalEmitted(t *testing.T) {
 
 func TestDielectricScatter(t *testing.T) {
 	mat := Dielectric{refIdx: 1.5}
+	rng := NewRNG(0)
 	
 	rayIn := NewRay(NewVec3d(-1.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
 	rec := HitRecord{
@@ -123,7 +127,7 @@ func TestDielectricScatter(t *testing.T) {
 	}
 	
 	var attenuation Color
-	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation)
+	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation, rng)
 	
 	if !isScattered {
 		t.Error("Dielectric should always scatter")
@@ -138,6 +142,7 @@ func TestDielectricScatter(t *testing.T) {
 func TestDiffuseLightScatter(t *testing.T) {
 	emit := constantTexture{color: Color{R: 1.0, G: 1.0, B: 1.0}}
 	mat := DiffuseLight{emit: emit}
+	rng := NewRNG(0)
 	
 	rayIn := NewRay(NewVec3d(-1.0, 0.0, 0.0), NewVec3d(1.0, 0.0, 0.0), 0.0)
 	rec := HitRecord{
@@ -147,7 +152,7 @@ func TestDiffuseLightScatter(t *testing.T) {
 	}
 	
 	var attenuation Color
-	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation)
+	isScattered, _ := mat.Scatter(rayIn, rec, &attenuation, rng)
 	
 	if isScattered {
 		t.Error("DiffuseLight should not scatter")
@@ -223,8 +228,9 @@ func TestSchlick(t *testing.T) {
 }
 
 func TestRandomInUnitSphere(t *testing.T) {
+	rng := NewRNG(0)
 	for i := 0; i < 100; i++ {
-		p := randomInUnitSphere()
+		p := randomInUnitSphere(rng)
 		length := p.Length()
 		if length >= 1.0 {
 			t.Errorf("randomInUnitSphere() returned vector with length %f >= 1.0", length)
